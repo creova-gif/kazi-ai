@@ -1,0 +1,237 @@
+/* Kazi AI Custom Styles */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.kazi-header-dark {
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.kazi-geo-bg {
+  position: absolute;
+  right: 0;
+  top: 0;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.kazi-card {
+  background: white;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s ease;
+}
+
+.kazi-card:active {
+  transform: scale(0.98);
+}
+
+.kazi-chip {
+  padding: 6px 13px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border-medium);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink2);
+  background: white;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.kazi-chip.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.kazi-btn-primary {
+  width: 100%;
+  padding: 17px;
+  background: var(--coral);
+  color: var(--cream);
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  transition: all 0.2s;
+}
+
+.kazi-btn-primary:hover {
+  background: #d15530;
+  transform: translateY(-1px);
+}
+
+.kazi-btn-primary:active {
+  transform: translateY(0);
+}
+
+.kazi-progress-bar {
+  height: 6px;
+  background: var(--sand);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.kazi-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--coral);
+  transition: width 0.8s ease;
+}
+
+.kazi-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-subtle);
+  font-size: 14px;
+  font-family: var(--font-body);
+  background: white;
+  transition: all 0.2s;
+}
+
+.kazi-input:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(231, 99, 59, 0.1);
+}
+
+.kazi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-family: var(--font-body);
+  display: block;
+}
+
+.kazi-section-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--cream);
+  letter-spacing: -0.03em;
+}
+
+.kazi-animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.kazi-slide-in {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.kazi-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+.kazi-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.kazi-nav-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.kazi-nav-item.active .kazi-nav-icon {
+  background: rgba(231, 99, 59, 0.1);
+}
+
+.kazi-nav-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: var(--font-body);
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.kazi-nav-item.active .kazi-nav-label {
+  color: var(--coral);
+}
+
+.kazi-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.kazi-scrollable::-webkit-scrollbar {
+  display: none;
+}
+
+.kazi-bottom-nav {
+  background: white;
+  border-top: 1.5px solid var(--border-medium);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 8px 4px 22px;
+  flex-shrink: 0;
+}
+
+/* Bottom Sheet Overlay */
+.vaul-overlay {
+  background: rgba(26, 20, 16, 0.6);
+}
+
+.vaul-drawer {
+  background: var(--cream);
+}

@@ -1,0 +1,348 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#1C1917;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;gap:14px}
+.nav{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:400px}
+.np{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;padding:6px 12px;border-radius:99px;cursor:pointer;transition:all .2s}
+.np.on{background:rgba(231,99,59,0.25);border-color:#E7633B;color:#F4A080}
+.phone{width:375px;border-radius:44px;overflow:hidden;position:relative;box-shadow:0 60px 120px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.06);background:#F5F0E8;display:flex;flex-direction:column;flex-shrink:0}
+.scr{display:none;flex-direction:column;overflow:hidden}
+.scr.on{display:flex}
+:root{--cream:#F5F0E8;--ink:#1A1410;--ink2:#3D3025;--muted:#8A7D6E;--coral:#E7633B;--coralL:#F4A080;--sand:#E8DFD0;--sand2:#D4C8B8;--green:#2D6A4F;--greenL:#52B788;--red:#C0392B;--b:rgba(26,20,16,0.10);--b2:rgba(26,20,16,0.18)}
+.dh{background:var(--ink);padding:52px 24px 0;position:relative;overflow:hidden;flex-shrink:0}
+.geo{position:absolute;right:0;top:0;opacity:.05;pointer-events:none}
+.bnav{background:white;border-top:1.5px solid var(--b2);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 4px 22px;flex-shrink:0}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;background:transparent;border:none;cursor:pointer;position:relative}
+.ni svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8;transition:stroke .2s}
+.ni.on svg{stroke:var(--coral);stroke-width:2.2}
+.ni-lbl{font-size:9px;font-weight:700;color:var(--muted);font-family:'Segoe UI',sans-serif;letter-spacing:.02em;transition:color .2s}
+.ni.on .ni-lbl{color:var(--coral)}
+.ni-dot{width:2px;height:2px;border-radius:50%;background:var(--coral);position:absolute;top:1px;left:50%;transform:translateX(-50%);display:none}
+.ni.on .ni-dot{display:block}
+.sec-scroll{flex:1;overflow-y:auto}
+.sec-scroll::-webkit-scrollbar{display:none}
+.card{background:white;border-radius:18px;border:1px solid var(--b);padding:16px;margin-bottom:10px}
+.card-sm{background:white;border-radius:16px;border:1px solid var(--b);padding:14px;margin-bottom:9px}
+.lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-family:'Segoe UI',monospace}
+.chip{padding:6px 13px;border-radius:99px;border:1.5px solid var(--b2);font-size:11px;font-weight:700;color:var(--ink2);background:white;cursor:pointer;font-family:'Segoe UI',sans-serif;transition:all .15s;flex-shrink:0}
+.chip.on{border-color:var(--ink);background:var(--ink);color:var(--cream)}
+.progress-bar{height:6px;background:var(--sand);border-radius:99px;overflow:hidden;margin:5px 0}
+.pb-fill{height:100%;border-radius:99px;background:var(--coral);transition:width .8s ease}
+</style>
+
+<div class="nav">
+  <button class="np on" onclick="go('splash')">Splash</button>
+  <button class="np" onclick="go('cv')">CV Builder</button>
+  <button class="np" onclick="go('jobs')">Jobs</button>
+  <button class="np" onclick="go('prep')">Interview</button>
+  <button class="np" onclick="go('profile')">Profile</button>
+  <button class="np" onclick="go('preview')">CV Preview</button>
+</div>
+
+<div class="phone">
+
+<!-- SPLASH -->
+<div class="scr on" id="s-splash" style="background:#1A1410;min-height:720px">
+  <svg class="geo" width="220" height="220" viewBox="0 0 220 220"><circle cx="200" cy="20" r="180" fill="none" stroke="#E7633B" stroke-width=".7" opacity=".18"/><circle cx="200" cy="20" r="110" fill="none" stroke="#E7633B" stroke-width=".7" opacity=".18"/><circle cx="200" cy="20" r="55" fill="none" stroke="#E7633B" stroke-width=".7" opacity=".18"/></svg>
+  <svg style="position:absolute;left:-30px;bottom:160px;width:140px;height:140px;opacity:.12;pointer-events:none" viewBox="0 0 140 140"><rect x="8" y="8" width="124" height="124" rx="3" fill="none" stroke="#E7633B" stroke-width=".6"/><rect x="26" y="26" width="88" height="88" rx="3" fill="none" stroke="#E7633B" stroke-width=".6"/><rect x="44" y="44" width="52" height="52" rx="3" fill="none" stroke="#E7633B" stroke-width=".6"/></svg>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;position:relative">
+    <div style="width:80px;height:80px;border-radius:24px;background:#E7633B;display:flex;align-items:center;justify-content:center;margin-bottom:28px">
+      <svg width="42" height="42" viewBox="0 0 44 44" fill="none"><rect x="6" y="16" width="32" height="22" rx="3" stroke="white" stroke-width="2.5" fill="none"/><path d="M15 16V13a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3" stroke="white" stroke-width="2.5" stroke-linecap="round"/><circle cx="22" cy="27" r="2.5" fill="white"/><path d="M34 8l1.2 2.8L38 12l-2.8 1.2L34 16l-1.2-2.8L30 12l2.8-1.2z" fill="#F4A080" opacity=".9"/></svg>
+    </div>
+    <div style="font-size:46px;font-weight:900;letter-spacing:-.04em;line-height:.9;text-align:center;margin-bottom:10px"><span style="color:#F5F0E8">Kazi</span><span style="color:#E7633B">AI</span></div>
+    <p style="color:rgba(245,240,232,0.4);font-size:13px;text-align:center;margin-bottom:44px">CV yako. Kazi yako. Mustakabali wako.</p>
+    <div style="width:100%">
+      ${[['01','<b>Jenga CV yako</b> kwa hatua rahisi'],['02','<b>AI inakuandikia</b> muhtasari wa kazi'],['03','<b>Pata kazi</b> zinazofaa ujuzi wako'],['04','<b>Jiandae</b> kwa mahojiano']].map(([n,t])=>`
+      <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid rgba(245,240,232,0.07)">
+        <div style="font-size:10px;font-weight:700;color:#E7633B;letter-spacing:.06em;width:22px">${n}</div>
+        <div style="font-size:13px;color:rgba(245,240,232,0.68)">${t}</div>
+      </div>`).join('')}
+      <div style="border-bottom:1px solid rgba(245,240,232,0.07);padding-bottom:0"></div>
+    </div>
+  </div>
+  <div style="padding:24px 32px 52px">
+    <button onclick="go('cv')" style="width:100%;padding:17px;background:#E7633B;color:#F5F0E8;font-size:14px;font-weight:700;border:none;border-radius:16px;cursor:pointer">Anza Kujenga CV Yako →</button>
+    <p style="color:rgba(245,240,232,0.22);font-size:11px;text-align:center;margin-top:12px">Bure · AI inasaidia · Dakika 5</p>
+  </div>
+</div>
+
+<!-- CV BUILDER -->
+<div class="scr" id="s-cv" style="min-height:720px">
+  <div class="dh">
+    <svg class="geo" width="180" height="180" viewBox="0 0 180 180"><circle cx="160" cy="20" r="140" fill="none" stroke="#E7633B" stroke-width="1"/><circle cx="160" cy="20" r="85" fill="none" stroke="#E7633B" stroke-width="1"/></svg>
+    <div style="position:relative;margin-bottom:16px">
+      <div style="font-size:11px;color:rgba(245,240,232,0.4);margin-bottom:3px">Justin Mafie</div>
+      <div style="font-size:20px;font-weight:900;color:#F5F0E8;letter-spacing:-.03em">Jenga CV Yako</div>
+    </div>
+    <!-- Completion ring -->
+    <div style="display:flex;align-items:center;gap:16px;background:rgba(245,240,232,0.06);border-radius:16px;padding:14px 18px;margin-bottom:16px;position:relative">
+      <div style="position:relative;width:72px;height:72px;flex-shrink:0">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="28" fill="none" stroke="#E8DFD0" stroke-width="6" stroke-dasharray="132 44" stroke-dashoffset="11" stroke-linecap="round"/>
+          <circle cx="36" cy="36" r="28" fill="none" stroke="#E7633B" stroke-width="6" stroke-dasharray="79 97" stroke-dashoffset="11" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-size:14px;font-weight:900;color:#E7633B">60%</div>
+        </div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#F5F0E8;margin-bottom:4px">✨ Karibu kukamilika</div>
+        <div style="height:5px;background:rgba(245,240,232,0.12);border-radius:99px;overflow:hidden;margin-bottom:5px"><div style="height:100%;width:60%;background:#E7633B;border-radius:99px"></div></div>
+        <div style="font-size:11px;color:rgba(245,240,232,0.4)">40% imebaki kukamilika</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec-scroll" style="padding:16px 20px 120px">
+    ${[
+      {icon:'✅',sw:'Muhtasari wa Kazi',filled:true,cnt:'Imekamilika'},
+      {icon:'✅',sw:'Uzoefu wa Kazi',filled:true,cnt:'2 zilizoongezwa'},
+      {icon:'✅',sw:'Elimu',filled:true,cnt:'1 iliyoongezwa'},
+      {icon:'⚡',sw:'Ujuzi',filled:false,cnt:'Bonyeza kuongeza'},
+      {icon:'👥',sw:'Marejeo',filled:false,cnt:'Bonyeza kuongeza'},
+      {icon:'🌍',sw:'Lugha',filled:false,cnt:'Bonyeza kuongeza'},
+    ].map(s=>`
+    <div style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:16px;border:1px solid ${s.filled?'rgba(231,99,59,0.25)':'rgba(26,20,16,0.10)'};background:${s.filled?'rgba(231,99,59,0.04)':'white'};cursor:pointer;margin-bottom:10px">
+      <div style="width:42px;height:42px;border-radius:13px;background:${s.filled?'rgba(231,99,59,0.12)':'#E8DFD0'};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${s.icon}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1410">${s.sw}</div><div style="font-size:11px;color:#8A7D6E;margin-top:2px">${s.cnt}</div></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4C8B8" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`).join('')}
+    <div style="width:100%;padding:15px 18px;border-radius:16px;background:#1A1410;border:none;cursor:pointer;display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div style="width:42px;height:42px;border-radius:13px;background:#E7633B;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#F5F0E8">AI Iandike Muhtasari</div><div style="font-size:11px;color:rgba(245,240,232,0.45);margin-top:2px">Claude AI inakuandikia kwa sekunde</div></div>
+      <div style="font-size:18px;color:#E7633B">✨</div>
+    </div>
+  </div>
+  <div class="bnav">${navItems('cv')}</div>
+</div>
+
+<!-- JOBS -->
+<div class="scr" id="s-jobs" style="min-height:720px">
+  <div class="dh">
+    <svg class="geo" width="180" height="180" viewBox="0 0 180 180"><circle cx="160" cy="20" r="140" fill="none" stroke="#E7633B" stroke-width="1"/></svg>
+    <div style="position:relative;margin-bottom:14px">
+      <div style="font-size:20px;font-weight:900;color:#F5F0E8;letter-spacing:-.03em">Nafasi za Kazi</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(245,240,232,0.08);border-radius:14px;padding:11px 14px;margin-bottom:0;border:1px solid rgba(245,240,232,0.12)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,0.5)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span style="color:rgba(245,240,232,0.35);font-size:13px">Tafuta nafasi za kazi...</span>
+    </div>
+    <div style="display:flex;gap:0;margin-top:12px">
+      ${[['match','🎯 Zinazofaa (6)','on'],['all','Zote',''],['saved','🔖 2','']].map(([id,lbl,on])=>`
+      <button onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.style.borderBottom='2px solid transparent');this.style.borderBottom='2px solid #E7633B';this.style.color='#F5F0E8'" style="padding:10px 14px;font-size:12px;font-weight:600;color:${on?'#F5F0E8':'rgba(245,240,232,0.45)'};background:transparent;border:none;cursor:pointer;border-bottom:${on?'2px solid #E7633B':'2px solid transparent'};font-family:inherit;transition:all .18s">${lbl}</button>`).join('')}
+    </div>
+  </div>
+  <!-- Sector chips -->
+  <div style="padding:10px 20px 0;background:var(--cream);overflow-x:auto;flex-shrink:0">
+    <div style="display:flex;gap:8px;padding-bottom:10px">
+      ${[['Zote',true],['💻 Tech',false],['💰 Fedha',false],['🌍 NGO',false],['🏛️ Serikali',false]].map(([l,on])=>`<button class="chip ${on?'on':''}" onclick="this.parentElement.querySelectorAll('.chip').forEach(c=>{c.classList.remove('on')});this.classList.add('on')">${l}</button>`).join('')}
+    </div>
+  </div>
+  <div class="sec-scroll" style="padding:8px 20px 100px">
+    ${[
+      {title:'Software Engineer',co:'Vodacom Tanzania',loc:'Dar es Salaam',sal:'TZS 2.5M–4M/mwezi',score:92,tags:['React','Node.js','Mobile'],days:29,color:'#2D6A4F'},
+      {title:'Data Analyst',co:'Selcom',loc:'Dar es Salaam',sal:'TZS 2M–3.5M/mwezi',score:85,tags:['Python','SQL','Power BI'],days:12,color:'#E7633B'},
+      {title:'Accountant',co:'CRDB Bank',loc:'Dar es Salaam',sal:'TZS 1.8M–2.8M/mwezi',score:87,tags:['Accounting','Excel','IFRS'],days:14,color:'#2D6A4F'},
+      {title:'Program Officer',co:'UNICEF Tanzania',loc:'Dar es Salaam',sal:'USD 2,000–3,500/mwezi',score:78,tags:['Project Mgmt','M&E'],days:15,color:'#E7633B'},
+    ].map(j=>`
+    <div style="background:white;border-radius:18px;border:1px solid var(--b);padding:16px;margin-bottom:10px;cursor:pointer">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div style="font-size:14px;font-weight:800;color:#1A1410">${j.title}</div><div style="font-size:12px;color:#E7633B;font-weight:600;margin-top:2px">${j.co}</div></div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A7D6E" stroke-width="1.8" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:11px;color:#8A7D6E">📍 ${j.loc}</span>
+        <span style="font-size:11px;color:#2D6A4F;font-weight:600">💰 ${j.sal}</span>
+        <span style="font-size:11px;color:${j.days<=14?'#C44E29':'#8A7D6E'};font-weight:${j.days<=14?700:400}">⏰ ${j.days}d</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${j.tags.map(t=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;background:#E8DFD0;color:#3D3025">${t}</span>`).join('')}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="height:5px;width:60px;background:#E8DFD0;border-radius:99px;overflow:hidden"><div style="height:100%;width:${j.score}%;background:${j.color};border-radius:99px"></div></div>
+        <span style="font-size:11px;font-weight:800;color:${j.color}">${j.score}% inakufaa</span>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="bnav">${navItems('jobs')}</div>
+</div>
+
+<!-- INTERVIEW PREP -->
+<div class="scr" id="s-prep" style="min-height:720px">
+  <div class="dh">
+    <svg class="geo" width="180" height="180" viewBox="0 0 180 180"><circle cx="160" cy="20" r="140" fill="none" stroke="#E7633B" stroke-width="1"/></svg>
+    <div style="position:relative;margin-bottom:14px">
+      <div style="font-size:20px;font-weight:900;color:#F5F0E8;letter-spacing:-.03em">Jiandae Mahojiano</div>
+      <div style="font-size:11px;color:rgba(245,240,232,0.4);margin-top:3px">Maswali na vidokezo vya kushinda</div>
+    </div>
+    <div style="display:flex;gap:0">
+      ${[['Kawaida','on'],['Tabia',''],['Vidokezo',''],['✨ AI','']].map(([l,on])=>`<button onclick="this.parentElement.querySelectorAll('button').forEach(b=>{b.style.borderBottom='2px solid transparent';b.style.color='rgba(245,240,232,0.45)'});this.style.borderBottom='2px solid #E7633B';this.style.color='#F5F0E8'" style="padding:10px 13px;font-size:12px;font-weight:600;color:${on?'#F5F0E8':'rgba(245,240,232,0.45)'};background:transparent;border:none;cursor:pointer;border-bottom:${on?'2px solid #E7633B':'2px solid transparent'};font-family:inherit">${l}</button>`).join('')}
+    </div>
+  </div>
+  <div class="sec-scroll" style="padding:16px 20px 100px">
+    ${[
+      {q:'Niambie kuhusu wewe mwenyewe.',tip:'Anza na jina, elimu, uzoefu wa kazi. Fanya dakika 2-3. Fikia mwisho na kwa nini unataka nafasi hii.'},
+      {q:'Kwa nini unataka kufanya kazi hapa?',tip:'Tafuta taarifa za kampuni mapema. Eleza jinsi malengo yako yanavyolingana na dhamira ya kampuni.'},
+      {q:'Nguvu zako ni zipi?',tip:'Chagua nguvu 2-3 zinazohusiana na kazi. Toa mifano halisi kutoka uzoefu wako.'},
+      {q:'Udhaifu wako ni nini?',tip:'Chagua udhaifu halisi lakini usiozuia kazi. Eleza jinsi unavyofanya kazi kuiondoa.'},
+      {q:'Unatarajia mshahara gani?',tip:'Toa kiwango, si nambari moja. Mf: "TZS 1.5M hadi 2M kulingana na mafao."'},
+    ].map((q,i)=>`
+    <div onclick="var b=this.querySelector('.tip');b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.chev').style.transform=b.style.display==='block'?'rotate(180deg)':'none'" style="background:white;border-radius:16px;border:1px solid var(--b);margin-bottom:9px;overflow:hidden;cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:12px">
+        <div style="font-size:13px;font-weight:600;color:#1A1410;flex:1;line-height:1.4">${q.q}</div>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A7D6E" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;transition:transform .2s"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="tip" style="display:none;padding:0 16px 14px;border-top:1px solid rgba(231,99,59,0.12)">
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-top:10px">
+          <div style="width:6px;height:6px;border-radius:50%;background:#E7633B;margin-top:5px;flex-shrink:0"></div>
+          <p style="font-size:12px;color:#3D3025;line-height:1.65">${q.tip}</p>
+        </div>
+      </div>
+    </div>`).join('')}
+    <!-- AI CTA -->
+    <div style="background:#1A1410;border-radius:18px;padding:18px;position:relative;overflow:hidden">
+      <svg style="position:absolute;right:0;top:0;opacity:.06;pointer-events:none" width="120" height="100" viewBox="0 0 120 100"><circle cx="110" cy="10" r="80" fill="none" stroke="#E7633B" stroke-width="1.5"/></svg>
+      <div style="display:flex;gap:12px;align-items:flex-start;position:relative">
+        <div style="width:38px;height:38px;border-radius:12px;background:#E7633B;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#F5F0E8;margin-bottom:3px">Maswali Maalum kwa Wewe</div>
+          <div style="font-size:12px;color:rgba(245,240,232,0.45)">Claude AI inaunda maswali kulingana na CV yako</div>
+          <button style="margin-top:12px;padding:10px 16px;background:#E7633B;border:none;border-radius:11px;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Unda Maswali Yangu →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bnav">${navItems('prep')}</div>
+</div>
+
+<!-- PROFILE -->
+<div class="scr" id="s-profile" style="min-height:720px">
+  <div class="dh">
+    <svg class="geo" width="180" height="180" viewBox="0 0 180 180"><circle cx="160" cy="20" r="140" fill="none" stroke="#E7633B" stroke-width="1"/></svg>
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;position:relative">
+      <div style="width:60px;height:60px;border-radius:18px;background:#E7633B;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:white;flex-shrink:0">JM</div>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#F5F0E8;letter-spacing:-.02em">Justin Mafie</div>
+        <div style="font-size:12px;color:#E7633B;font-weight:600;margin-top:3px">Software Developer</div>
+        <div style="font-size:11px;color:rgba(245,240,232,0.4);margin-top:2px">📍 Halton Hills, ON · 🇹🇿</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative">
+      ${[['📄','CV','60%'],['💼','Kazi','2'],['📚','Maombi','3'],['🔖','Saved','2']].map(([ic,l,v])=>`
+      <div style="background:rgba(245,240,232,0.07);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:.9rem;margin-bottom:3px">${ic}</div>
+        <div style="font-size:16px;font-weight:800;color:#F5F0E8">${v}</div>
+        <div style="font-size:9px;color:rgba(245,240,232,0.35);font-weight:700;letter-spacing:.06em;text-transform:uppercase">${l}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="sec-scroll" style="padding:16px 20px 100px">
+    <div class="card" style="display:flex;gap:14px;align-items:flex-start;background:rgba(231,99,59,0.07);border-color:rgba(231,99,59,0.2);margin-bottom:14px">
+      <div style="font-size:1.4rem">📋</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#1A1410;margin-bottom:4px">CV yako ni 60% iliyokamilika</div>
+        <div style="height:5px;background:#D4C8B8;border-radius:99px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:60%;background:#E7633B;border-radius:99px"></div></div>
+        <div style="font-size:12px;color:#8A7D6E">Ongeza Ujuzi na Marejeo ili kupata nafasi bora</div>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:#8A7D6E;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Mipangilio</div>
+    <div style="background:white;border-radius:18px;border:1px solid var(--b);overflow:hidden;margin-bottom:14px">
+      ${[['🌍','Lugha','Kiswahili 🇹🇿'],['📤','Shiriki KaziAI','Saidia marafiki wako'],['🗑️','Futa Data Yote','Anza upya',true]].map(([ic,t,s,danger])=>`
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid rgba(26,20,16,0.06);cursor:pointer">
+        <div style="width:34px;height:34px;border-radius:10px;background:${danger?'#FEF2F0':'#E8DFD0'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.95rem">${ic}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:${danger?'#C0392B':'#1A1410'}">${t}</div><div style="font-size:11px;color:#8A7D6E">${s}</div></div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4C8B8" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>`).join('')}
+    </div>
+    <div style="text-align:center;padding:12px 0">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:#E8DFD0;border-radius:99px;padding:8px 16px">
+        <div style="width:22px;height:22px;border-radius:7px;background:#E7633B;display:flex;align-items:center;justify-content:center">
+          <svg width="12" height="12" viewBox="0 0 44 44" fill="none"><rect x="6" y="16" width="32" height="22" rx="3" stroke="white" stroke-width="2.5" fill="none"/><path d="M15 16V13a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:#1A1410">KaziAI</span>
+        <span style="font-size:11px;color:#8A7D6E">by CREOVA Solutions 🇹🇿</span>
+      </div>
+    </div>
+  </div>
+  <div class="bnav">${navItems('profile')}</div>
+</div>
+
+<!-- CV PREVIEW -->
+<div class="scr" id="s-preview" style="min-height:720px;background:#1A1410">
+  <div style="background:#1A1410;padding:52px 20px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:16px;font-weight:800;color:#F5F0E8;letter-spacing:-.02em">Hakiki CV</div>
+    <button onclick="go('cv')" style="display:flex;align-items:center;gap:5px;background:#E7633B;border:none;border-radius:99px;padding:8px 14px;cursor:pointer">
+      <span style="font-size:12px;font-weight:700;color:white">✕ Funga</span>
+    </button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:0 16px 40px">
+    <div style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+      <!-- CV header -->
+      <div style="background:#1A1410;padding:24px 24px 20px;position:relative;overflow:hidden">
+        <svg style="position:absolute;right:0;top:0;opacity:.06;pointer-events:none" width="140" height="110" viewBox="0 0 140 110"><circle cx="130" cy="10" r="100" fill="none" stroke="#E7633B" stroke-width="1.5"/></svg>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative">
+          <div>
+            <div style="font-size:22px;font-weight:900;color:#F5F0E8;letter-spacing:-.03em;line-height:1.1">Justin Mafie</div>
+            <div style="font-size:13px;color:#E7633B;font-weight:700;margin-top:4px">Software Developer</div>
+            <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+              <span style="font-size:11px;color:rgba(245,240,232,0.55)">📞 +1 905 XXX XXXX</span>
+              <span style="font-size:11px;color:rgba(245,240,232,0.55)">📍 Halton Hills, ON</span>
+            </div>
+          </div>
+          <div style="width:50px;height:50px;border-radius:14px;background:#E7633B;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:white;flex-shrink:0">JM</div>
+        </div>
+      </div>
+      <!-- CV body -->
+      <div style="padding:20px 24px">
+        ${[
+          ['Muhtasari wa Kazi','<p style="font-size:12px;color:#3D3025;line-height:1.7">Creative entrepreneur and software developer with 2+ years building digital products for East African markets. Founder of CREOVA Solutions — a multi-venture youth-led startup spanning tech, media, and music. Passionate about using technology to solve real problems for African communities.</p>'],
+          ['Uzoefu wa Kazi','<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:13px;font-weight:700;color:#1A1410">Founder & CEO</div><div style="font-size:12px;color:#E7633B;font-weight:600">CREOVA Solutions</div></div><div style="font-size:11px;color:#8A7D6E">Apr 2025 — Present</div></div><p style="font-size:12px;color:#3D3025;margin-top:5px;line-height:1.6">Building a suite of AI-powered products for East African markets including healthcare, education, and fintech tools.</p></div>'],
+          ['Elimu','<div style="display:flex;justify-content:space-between"><div><div style="font-size:13px;font-weight:700;color:#1A1410">B.Sc. Business Administration</div><div style="font-size:12px;color:#E7633B;font-weight:600">Brock University</div></div><div style="font-size:11px;color:#8A7D6E">2026</div></div>'],
+          ['Ujuzi','<div style="display:flex;flex-wrap:wrap;gap:8px">${["React","TypeScript","Node.js","Python","Supabase","Figma"].map(s=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;background:#F5F0E8;border:1px solid rgba(26,20,16,0.12)"><span style="font-size:11px;font-weight:700;color:#1A1410">${s}</span><span style="display:flex;gap:2px">${[1,2,3,4].map(d=>`<div style="width:4px;height:4px;border-radius:50%;background:${d<=3?"#E7633B":"#E8DFD0"}"></div>`).join("")}</span></div>`).join("")}</div>'],
+        ].map(([title, content]) => `
+        <div style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:700;color:#E7633B;text-transform:uppercase;letter-spacing:.1em">${title}</div>
+            <div style="flex:1;height:1px;background:rgba(231,99,59,0.25)"></div>
+          </div>
+          ${content}
+        </div>`).join('')}
+        <div style="text-align:center;padding-top:14px;border-top:1px solid rgba(26,20,16,0.1)">
+          <div style="font-size:10px;color:rgba(26,20,16,0.22);font-family:monospace">Built with KaziAI · CREOVA Solutions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function navItems(active) {
+  const tabs = [
+    {id:'cv',lbl:'CV Yangu',path:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2l6 6M8 13h8M8 17h6'},
+    {id:'jobs',lbl:'Kazi',path:'M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z'},
+    {id:'prep',lbl:'Jiandae',path:'M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'},
+    {id:'profile',lbl:'Mimi',path:'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'},
+  ];
+  return tabs.map(t=>`
+    <button class="ni ${t.id===active?'on':''}" onclick="go('${t.id}')">
+      <div class="ni-dot"></div>
+      <div style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:${t.id===active?'rgba(231,99,59,0.1)':'transparent'};transition:background .2s">
+        <svg viewBox="0 0 24 24"><path d="${t.path}"/></svg>
+      </div>
+      <span class="ni-lbl">${t.lbl}</span>
+    </button>`).join('');
+}
+
+function go(id) {
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  const el = document.getElementById('s-'+id);
+  if (el) el.classList.add('on');
+  document.querySelectorAll('.np').forEach(b=>{
+    const matches = (b.textContent==='Splash'&&id==='splash')||(b.textContent==='CV Builder'&&id==='cv')||(b.textContent==='Jobs'&&id==='jobs')||(b.textContent==='Interview'&&id==='prep')||(b.textContent==='Profile'&&id==='profile')||(b.textContent==='CV Preview'&&id==='preview');
+    b.classList.toggle('on', matches);
+  });
+}
+</script>

@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream: #F5F0E8;
+  --cream2: #EDE7DC;
+  --ink: #1A1410;
+  --ink2: #3D3025;
+  --muted: #8A7D6E;
+  --coral: #E7633B;
+  --coral-light: #F4A080;
+  --coral-deep: #C44E29;
+  --sand: #E8DFD0;
+  --sand2: #D4C8B8;
+  --blue: #2563EB;
+  --blue-light: #60A5FA;
+  --green: #2D6A4F;
+  --green-light: #52B788;
+  --gold: #B45309;
+  --gold-light: #F59E0B;
+  --border: rgba(26,20,16,0.10);
+  --border2: rgba(26,20,16,0.18);
+}
+
+html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, button, textarea, select { font-family: 'Sora', sans-serif; }
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
