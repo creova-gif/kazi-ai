@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "XtN_nbcRx14bSQ3MBcfnQ"
+uri = "file://KaziAI_PRD.md"
+type = "text"
+title = "KaziAI — Product Requirements Document"
