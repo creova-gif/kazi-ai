@@ -5,6 +5,7 @@ import { useApp, type WorkExperience, type Education, type Skill } from '@/app/A
 import { toast } from 'sonner';
 import { CVPreview } from './CVPreview';
 import { AISummarySheet } from './AISummarySheet';
+import { CVScoreSheet } from './CVScoreSheet';
 
 const C = { cream: '#F5F0E8', ink: '#1A1410', ink2: '#3D3025', muted: '#8A7D6E', coral: '#E7633B', coralD: '#C44E29', sand: '#E8DFD0', sand2: '#D4C8B8', green: '#2D6A4F', border: 'rgba(26,20,16,0.10)', border2: 'rgba(26,20,16,0.18)' };
 
@@ -45,6 +46,7 @@ export function CVBuilder() {
   const [activeSection, setActiveSection] = useState<Section | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showAISummary, setShowAISummary] = useState(false);
+  const [showCVScore, setShowCVScore] = useState(false);
 
   // Form states
   const [expForm, setExpForm] = useState<Partial<Omit<WorkExperience,'id'>>>({});
@@ -174,6 +176,19 @@ export function CVBuilder() {
             <div style={{ fontSize: 11, color: 'rgba(245,240,232,0.45)', marginTop: 2 }}>{lang === 'sw' ? 'Claude AI inakuandikia kwa sekunde' : 'Claude AI writes it in seconds'}</div>
           </div>
           <div style={{ fontSize: 18, color: C.coral }}>✨</div>
+        </motion.button>
+
+        {/* CV Score CTA */}
+        <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} onClick={() => setShowCVScore(true)}
+          style={{ width: '100%', padding: '16px 18px', borderRadius: 16, background: 'white', border: `1.5px solid rgba(45,106,79,0.3)`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, textAlign: 'left' }}>
+          <div style={{ width: 42, height: 42, borderRadius: 13, background: 'rgba(45,106,79,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: '1.3rem' }}>🏆</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.green }}>{lang === 'sw' ? 'Angalia Alama ya CV Yangu' : 'Score My CV'}</div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{lang === 'sw' ? 'AI inakupa alama na vidokezo vya kuboresha' : 'AI gives you a score + improvement tips'}</div>
+          </div>
+          <div style={{ fontSize: 14, color: C.green }}>→</div>
         </motion.button>
       </div>
 
@@ -405,6 +420,7 @@ export function CVBuilder() {
 
       {showAISummary && <AISummarySheet onClose={() => setShowAISummary(false)} />}
       {showPreview && <CVPreview onClose={() => setShowPreview(false)} />}
+      {showCVScore && <CVScoreSheet onClose={() => setShowCVScore(false)} />}
     </div>
   );
 }

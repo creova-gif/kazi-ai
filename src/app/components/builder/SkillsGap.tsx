@@ -82,8 +82,14 @@ export function SkillsGap({ onBack }: Props) {
       : `An applicant wants to work as "${selectedJob}". They're missing these skills: ${missingStr}. Give 3 short, practical tips on how to gain these skills in Tanzania/East Africa. Reply with JSON only: {"tips": ["tip1", "tip2", "tip3"]}`;
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 400, messages: [{ role: 'user', content: prompt }] }),
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 400, messages: [{ role: 'user', content: prompt }] }),
       });
       const data = await res.json();
       const parsed = JSON.parse(data.content?.[0]?.text?.replace(/```json|```/g, '') || '{}');

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Download, Share2 } from 'lucide-react';
+import { X, Printer, Share2 } from 'lucide-react';
 import { useApp } from '@/app/App';
 import { toast } from 'sonner';
 
@@ -37,6 +37,10 @@ ${lang === 'sw' ? 'Imejengwa na KaziAI' : 'Built with KaziAI'}`;
         <div style={{ background: C.ink, padding: '52px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#F5F0E8', letterSpacing: '-0.02em' }}>{lang === 'sw' ? 'Hakiki CV' : 'CV Preview'}</div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(245,240,232,0.1)', border: 'none', borderRadius: 99, padding: '8px 14px', cursor: 'pointer' }}>
+              <Printer size={13} color="rgba(245,240,232,0.8)" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(245,240,232,0.8)', fontFamily: "'Space Grotesk', sans-serif" }}>{lang === 'sw' ? 'Chapisha / PDF' : 'Print / PDF'}</span>
+            </button>
             <button onClick={handleShare} style={{ display: 'flex', alignItems: 'center', gap: 5, background: C.coral, border: 'none', borderRadius: 99, padding: '8px 14px', cursor: 'pointer' }}>
               <Share2 size={13} color="white" />
               <span style={{ fontSize: 12, fontWeight: 700, color: 'white', fontFamily: "'Space Grotesk', sans-serif" }}>{lang === 'sw' ? 'Shiriki' : 'Share'}</span>
