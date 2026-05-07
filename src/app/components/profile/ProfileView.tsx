@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Settings, Trash2, Share2, Globe, Plus, Award } from 'lucide-react';
+import { Trash2, Share2, Globe } from 'lucide-react';
 import { ProfileShareCard } from './ProfileShareCard';
 import { AnimatePresence } from 'motion/react';
 import { useApp } from '@/app/App';
@@ -11,6 +12,7 @@ export function ProfileView() {
   const { state, setLanguage, clearAll } = useApp();
   const lang = state.language;
   const cv = state.cv;
+  const [showShareCard, setShowShareCard] = useState(false);
 
   const stats = [
     { icon: '📄', label: lang === 'sw' ? 'CV' : 'CV', val: `${cv.completionPct}%` },
