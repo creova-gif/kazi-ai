@@ -16,33 +16,29 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
+args = "Start Frontend"
 
 [[workflows.workflow]]
-name = "Start application"
+name = "Start Frontend"
 author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm run dev"
-waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=production npx expo start --port 5000 --web --clear"
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 5001
-externalPort = 3000
-
-[[ports]]
-localPort = 5173
-externalPort = 5173
-
 [deployment]
 deploymentTarget = "static"
 build = ["pnpm", "run", "build"]
 publicDir = "dist"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_ANTHROPIC_API_KEY = "USE_ANTHROPIC_API_KEY"

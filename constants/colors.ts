@@ -1,0 +1,45 @@
+const palette = {
+  cream: '#F5F0E8',
+  ink: '#1A1410',
+  ink2: '#3D3025',
+  muted: '#8A7D6E',
+  coral: '#E7633B',
+  coralDark: '#C44E29',
+  sand: '#E8DFD0',
+  sand2: '#D4C8B8',
+  green: '#2D6A4F',
+  greenLight: '#52B788',
+  red: '#C0392B',
+  white: '#FFFFFF',
+  black: '#000000',
+};
+
+export const Colors = {
+  light: {
+    background: palette.cream,
+    card: palette.white,
+    cardAlt: '#FEFCF9',
+    foreground: palette.ink,
+    foreground2: palette.ink2,
+    muted: palette.muted,
+    primary: palette.coral,
+    primaryDark: palette.coralDark,
+    sand: palette.sand,
+    sand2: palette.sand2,
+    success: palette.green,
+    successLight: palette.greenLight,
+    error: palette.red,
+    border: 'rgba(26,20,16,0.10)',
+    borderMedium: 'rgba(26,20,16,0.18)',
+    ink: palette.ink,
+    inkLight: 'rgba(26,20,16,0.55)',
+    white: palette.white,
+    tabBar: palette.white,
+    tabBarBorder: 'rgba(26,20,16,0.12)',
+    radius: 16,
+    radiusSm: 10,
+    radiusLg: 22,
+  },
+};
+
+export type ColorScheme = typeof Colors.light;
