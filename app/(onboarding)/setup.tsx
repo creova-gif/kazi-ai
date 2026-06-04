@@ -46,6 +46,8 @@ export default function SetupScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [location, setLocation] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [gradYear, setGradYear] = useState('');
   const [country, setCountry] = useState<EACountry>('Tanzania');
   const [selectedSectors, setSelectedSectors] = useState<JobSector[]>([]);
   const [expLevel, setExpLevel] = useState<'none' | 'entry' | 'mid' | 'senior'>('entry');
@@ -62,7 +64,7 @@ export default function SetupScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     updateCV({
       firstName: firstName.trim(), lastName: lastName.trim(),
-      phone, email, location, country,
+      phone, email, location, country, institution, gradYear,
       targetSector: selectedSectors, experienceLevel: expLevel,
     });
     completeOnboarding();
@@ -97,6 +99,12 @@ export default function SetupScreen() {
 
         <Text style={styles.label}>{t('City / Location', 'Mji / Mahali')}</Text>
         <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder={t('e.g. Dar es Salaam, Nairobi…', 'k.m. Dar es Salaam, Nairobi…')} placeholderTextColor="#8A7D6E" />
+
+        <Text style={styles.label}>{t('Institution / University', 'Chuo / Chuo Kikuu')}</Text>
+        <TextInput style={styles.input} value={institution} onChangeText={setInstitution} placeholder={t('e.g. University of Nairobi', 'k.m. Chuo Kikuu cha Dar es Salaam')} placeholderTextColor="#8A7D6E" />
+
+        <Text style={styles.label}>{t('Graduation Year', 'Mwaka wa Kuhitimu')}</Text>
+        <TextInput style={styles.input} value={gradYear} onChangeText={setGradYear} placeholder="e.g. 2024" keyboardType="numeric" placeholderTextColor="#8A7D6E" />
 
         <Text style={styles.label}>{t('Country', 'Nchi')}</Text>
         <View style={styles.chipRow}>

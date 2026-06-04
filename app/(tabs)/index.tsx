@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Modal, TextInput, KeyboardAvoidingView, Platform,
-  FlatList, Switch, Alert, ActivityIndicator,
+  FlatList, Switch, Alert, ActivityIndicator, Share,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,7 +50,7 @@ export default function CVBuilderScreen() {
     setAiResult('');
     const prompt = lang === 'sw'
       ? `Andika muhtasari wa kitaaluma kwa ajili ya CV kwa Kiingereza (paragraphs 2-3, maneno 80-100). Mtu: ${cv.firstName} ${cv.lastName}, Kiwango: ${cv.experienceLevel}, Elimu: ${cv.educationLevel}, Ujuzi: ${cv.skills.map(s => s.name).join(', ')}. Fanya iwe ya kuvutia na ya kitaalamu.`
-      : `Write a professional CV summary for: ${cv.firstName} ${cv.lastName}, Level: ${cv.experienceLevel}, Skills: ${cv.skills.map(s => s.name).join(', ')}, Education: ${cv.educationLevel}. 2-3 sentences, 60-80 words, Tanzanian job market context. Be specific and impactful.`;
+      : `Write a professional CV summary for: ${cv.firstName} ${cv.lastName}, Level: ${cv.experienceLevel}, Skills: ${cv.skills.map(s => s.name).join(', ')}, Education: ${cv.educationLevel}${cv.institution ? ', Institution: ' + cv.institution : ''}. 2-3 sentences, 60-80 words, East Africa job market context. Be specific and impactful.`;
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -74,7 +74,7 @@ export default function CVBuilderScreen() {
   const scoreCV = async () => {
     setShowScore(true);
     setAiScore(null);
-    const prompt = `Score this CV for the Tanzanian job market (1-100). Name: ${cv.firstName} ${cv.lastName}, Summary: "${cv.summary?.slice(0, 200)}", Experience: ${cv.experience.length} items, Education: ${cv.education.length} items, Skills: ${cv.skills.map(s => s.name).join(', ')}.
+    const prompt = `Score this CV for the East Africa job market (1-100). Name: ${cv.firstName} ${cv.lastName}, Summary: "${cv.summary?.slice(0, 200)}", Experience: ${cv.experience.length} items, Education: ${cv.education.length} items, Skills: ${cv.skills.map(s => s.name).join(', ')}.
 Respond ONLY as JSON: {"score": 72, "feedback": ["strength1","strength2"], "improvements": ["tip1","tip2","tip3"]}`;
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -94,6 +94,57 @@ Respond ONLY as JSON: {"score": 72, "feedback": ["strength1","strength2"], "impr
     } catch {
       setAiScore({ score: 0, feedback: [], improvements: [t('Could not analyse CV.', 'Imeshindwa kuchambua CV.')] });
     }
+  };
+
+  const exportCV = async () => {
+    const lines: string[] = [];
+    lines.push((`${cv.firstName} ${cv.lastName}`).trim().toUpperCase());
+    if (cv.title) lines.push(cv.title);
+    if (cv.phone) lines.push(`📞 ${cv.phone}`);
+    if (cv.email) lines.push(`📧 ${cv.email}`);
+    if (cv.location) lines.push(`📍 ${cv.location}${cv.country ? ', ' + cv.country : ''}`);
+    if (cv.linkedin) lines.push(`LinkedIn: ${cv.linkedin}`);
+    if (cv.institution) lines.push(`🎓 ${cv.institution}${cv.gradYear ? ' (' + cv.gradYear + ')' : ''}`);
+    lines.push('');
+    if (cv.summary) { lines.push('── PROFESSIONAL SUMMARY ──'); lines.push(cv.summary); lines.push(''); }
+    if (cv.experience.length > 0) {
+      lines.push('── WORK EXPERIENCE ──');
+      cv.experience.forEach(exp => {
+        lines.push(`${exp.title} | ${exp.company}`);
+        lines.push(`${exp.startDate}–${exp.current ? 'Present' : exp.endDate} | ${exp.location}`);
+        if (exp.description) lines.push(exp.description);
+        lines.push('');
+      });
+    }
+    if (cv.education.length > 0) {
+      lines.push('── EDUCATION ──');
+      cv.education.forEach(edu => {
+        lines.push(`${edu.degree} | ${edu.institution}`);
+        lines.push(`${edu.year}${edu.grade ? ' · Grade: ' + edu.grade : ''}`);
+        lines.push('');
+      });
+    }
+    if (cv.skills.length > 0) {
+      lines.push('── SKILLS ──');
+      lines.push(cv.skills.map(s => s.name).join(' · '));
+      lines.push('');
+    }
+    if (cv.languages.length > 0) {
+      lines.push('── LANGUAGES ──');
+      lines.push(cv.languages.map(l => `${l.lang} (${l.level})`).join(' · '));
+      lines.push('');
+    }
+    if (cv.references.length > 0) {
+      lines.push('── REFERENCES ──');
+      cv.references.forEach(ref => {
+        lines.push(`${ref.name} | ${ref.title} | ${ref.company}`);
+        lines.push(`📞 ${ref.phone}${ref.email ? ' | 📧 ' + ref.email : ''}`);
+        lines.push('');
+      });
+    }
+    try {
+      await Share.share({ message: lines.join('\n'), title: `${cv.firstName} ${cv.lastName} - CV` });
+    } catch {}
   };
 
   const sections = [
@@ -120,10 +171,16 @@ Respond ONLY as JSON: {"score": 72, "feedback": ["strength1","strength2"], "impr
               {cv.firstName ? `${cv.firstName} ${cv.lastName}`.trim() : t('Build your CV', 'Jenga CV yako')}
             </Text>
           </View>
-          <TouchableOpacity style={[styles.previewBtn, { backgroundColor: colors.primary }]} onPress={() => open('preview')} activeOpacity={0.85}>
-            <Ionicons name="eye-outline" size={18} color="#fff" />
-            <Text style={styles.previewBtnText}>{t('Preview', 'Tazama')}</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity style={[styles.previewBtn, { backgroundColor: colors.success }]} onPress={exportCV} activeOpacity={0.85}>
+              <Ionicons name="share-outline" size={18} color="#fff" />
+              <Text style={styles.previewBtnText}>{t('Export', 'Tuma')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.previewBtn, { backgroundColor: colors.primary }]} onPress={() => open('preview')} activeOpacity={0.85}>
+              <Ionicons name="eye-outline" size={18} color="#fff" />
+              <Text style={styles.previewBtnText}>{t('Preview', 'Tazama')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Completion bar */}
@@ -237,6 +294,7 @@ function InfoModal({ visible, onClose, lang }: { visible: boolean; onClose: () =
   const [form, setForm] = useState({
     firstName: cv.firstName, lastName: cv.lastName, title: cv.title,
     phone: cv.phone, email: cv.email, location: cv.location, linkedin: cv.linkedin,
+    institution: cv.institution ?? '', gradYear: cv.gradYear ?? '',
   });
 
   const save = () => { updateCV(form); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); onClose(); };
@@ -255,6 +313,8 @@ function InfoModal({ visible, onClose, lang }: { visible: boolean; onClose: () =
               { key: 'email', label: 'Email', placeholder: 'amina@gmail.com', keyType: 'email-address', autoCapitalize: 'none' },
               { key: 'location', label: t('Location', 'Mahali'), placeholder: 'Dar es Salaam, Tanzania' },
               { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/amina', keyType: 'url', autoCapitalize: 'none' },
+              { key: 'institution', label: t('Institution / University', 'Chuo / Chuo Kikuu'), placeholder: t('e.g. University of Dar es Salaam', 'k.m. Chuo Kikuu cha Dar es Salaam') },
+              { key: 'gradYear', label: t('Graduation Year', 'Mwaka wa Kuhitimu'), placeholder: 'e.g. 2024', keyType: 'numeric' },
             ].map(f => (
               <View key={f.key}>
                 <Text style={[modalStyles.label, { color: colors.muted }]}>{f.label}</Text>

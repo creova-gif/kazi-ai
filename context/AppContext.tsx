@@ -50,6 +50,8 @@ export interface CV {
   email: string;
   location: string;
   country: EACountry;
+  institution: string;
+  gradYear: string;
   linkedin: string;
   summary: string;
   experience: WorkExperience[];
@@ -85,13 +87,15 @@ export interface AppState {
   appliedJobs: string[];
   applications: Application[];
   coachMessages: CoachMessage[];
+  followedCompanies: string[];
 }
 
 const makeId = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
 const defaultCV: CV = {
   firstName: '', lastName: '', title: '', phone: '', email: '',
-  location: '', country: 'Tanzania', linkedin: '', summary: '',
+  location: '', country: 'Tanzania', institution: '', gradYear: '',
+  linkedin: '', summary: '',
   experience: [], education: [], skills: [],
   languages: [{ lang: 'Kiswahili', level: 'Native' }, { lang: 'English', level: 'Fluent' }],
   references: [], targetSector: [], experienceLevel: 'entry', educationLevel: 'degree',
@@ -100,6 +104,7 @@ const defaultCV: CV = {
 const defaultState: AppState = {
   language: 'en', onboardingComplete: false, cv: defaultCV,
   savedJobs: [], appliedJobs: [], applications: [], coachMessages: [],
+  followedCompanies: [],
 };
 
 const STORAGE_KEY = 'kazi_ai_state_v2';
@@ -123,6 +128,7 @@ interface AppContextValue {
   updateApplicationStatus: (jobId: string, status: Application['status']) => void;
   addCoachMessage: (msg: CoachMessage) => void;
   clearCoachMessages: () => void;
+  toggleFollowCompany: (id: string) => void;
   clearAll: () => void;
 }
 
@@ -137,7 +143,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
-          setState({ ...defaultState, ...parsed, cv: { ...defaultCV, ...parsed.cv } });
+          setState({
+            ...defaultState, ...parsed,
+            cv: { ...defaultCV, ...parsed.cv },
+            followedCompanies: parsed.followedCompanies ?? [],
+          });
         } catch {}
       }
       setLoaded(true);
@@ -174,8 +184,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const existing = s.applications.findIndex(a => a.jobId === app.jobId);
       const full: Application = { ...app, dateApplied: new Date().toISOString().split('T')[0] };
       if (existing >= 0) {
-        const apps = [...s.applications];
-        apps[existing] = full;
+        const apps = [...s.applications]; apps[existing] = full;
         return { ...s, applications: apps };
       }
       return { ...s, applications: [...s.applications, full] };
@@ -185,11 +194,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })),
     addCoachMessage: (msg) => update(s => ({ ...s, coachMessages: [...s.coachMessages, msg] })),
     clearCoachMessages: () => update(s => ({ ...s, coachMessages: [] })),
+    toggleFollowCompany: (id) => update(s => ({
+      ...s, followedCompanies: s.followedCompanies.includes(id)
+        ? s.followedCompanies.filter(c => c !== id)
+        : [...s.followedCompanies, id]
+    })),
     clearAll: () => { AsyncStorage.removeItem(STORAGE_KEY); setState(defaultState); },
   }), [state]);
 
   if (!loaded) return null;
-
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 

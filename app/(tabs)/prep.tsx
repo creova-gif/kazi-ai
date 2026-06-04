@@ -59,6 +59,11 @@ export default function PrepScreen() {
 
   const [activeTool, setActiveTool] = useState<Tool>(null);
   const open = (tool: Tool) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTool(tool); };
+  const [registeredEvents, setRegisteredEvents] = useState<Set<string>>(new Set());
+  const toggleRegister = (id: string) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setRegisteredEvents(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  };
 
   const tools = [
     {
@@ -100,36 +105,44 @@ export default function PrepScreen() {
             </View>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
-            {EVENTS.map(ev => (
-              <TouchableOpacity
-                key={ev.id}
-                style={[styles.eventCard, { backgroundColor: colors.card }]}
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.eventColorBar, { backgroundColor: ev.color }]} />
-                <View style={styles.eventContent}>
-                  <View style={[styles.eventTypePill, { backgroundColor: `${ev.color}18` }]}>
-                    <Ionicons
-                      name={ev.type === 'virtual' ? 'videocam' : ev.type === 'hybrid' ? 'git-merge' : 'location'}
-                      size={11} color={ev.color}
-                    />
-                    <Text style={[styles.eventTypeText, { color: ev.color }]}>{ev.type}</Text>
+            {EVENTS.map(ev => {
+              const isRegistered = registeredEvents.has(ev.id);
+              return (
+                <View key={ev.id} style={[styles.eventCard, { backgroundColor: colors.card }]}>
+                  <View style={[styles.eventColorBar, { backgroundColor: ev.color }]} />
+                  <View style={styles.eventContent}>
+                    <View style={[styles.eventTypePill, { backgroundColor: `${ev.color}18` }]}>
+                      <Ionicons
+                        name={ev.type === 'virtual' ? 'videocam' : ev.type === 'hybrid' ? 'git-merge' : 'location'}
+                        size={11} color={ev.color}
+                      />
+                      <Text style={[styles.eventTypeText, { color: ev.color }]}>{ev.type}</Text>
+                    </View>
+                    <Text style={[styles.eventTitle, { color: colors.foreground }]} numberOfLines={2}>{ev.title}</Text>
+                    <Text style={[styles.eventOrg, { color: colors.muted }]}>{ev.organizer}</Text>
+                    <View style={styles.eventMeta}>
+                      <Text style={styles.eventFlag}>{ev.flag}</Text>
+                      <Text style={[styles.eventCity, { color: colors.muted }]}>{ev.city}</Text>
+                    </View>
+                    <View style={styles.eventDateRow}>
+                      <Ionicons name="calendar-outline" size={12} color={colors.primary} />
+                      <Text style={[styles.eventDate, { color: colors.primary }]}>{ev.date}</Text>
+                    </View>
+                    <Text style={[styles.eventSector, { color: colors.muted }]}>{ev.sector}</Text>
+                    <TouchableOpacity
+                      style={[styles.registerBtn, { backgroundColor: isRegistered ? colors.success : ev.color }]}
+                      onPress={() => toggleRegister(ev.id)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name={isRegistered ? 'checkmark-circle' : 'add-circle-outline'} size={13} color="#fff" />
+                      <Text style={styles.registerBtnText}>
+                        {isRegistered ? t('Registered ✓', 'Umesajiliwa ✓') : t('Register', 'Jiandikishe')}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={[styles.eventTitle, { color: colors.foreground }]} numberOfLines={2}>{ev.title}</Text>
-                  <Text style={[styles.eventOrg, { color: colors.muted }]}>{ev.organizer}</Text>
-                  <View style={styles.eventMeta}>
-                    <Text style={styles.eventFlag}>{ev.flag}</Text>
-                    <Text style={[styles.eventCity, { color: colors.muted }]}>{ev.city}</Text>
-                  </View>
-                  <View style={styles.eventDateRow}>
-                    <Ionicons name="calendar-outline" size={12} color={colors.primary} />
-                    <Text style={[styles.eventDate, { color: colors.primary }]}>{ev.date}</Text>
-                  </View>
-                  <Text style={[styles.eventSector, { color: colors.muted }]}>{ev.sector}</Text>
                 </View>
-              </TouchableOpacity>
-            ))}
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -591,6 +604,8 @@ const styles = StyleSheet.create({
   eventDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
   eventDate: { fontSize: 11, fontWeight: '600' },
   eventSector: { fontSize: 10 },
+  registerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, paddingVertical: 8, marginTop: 10 },
+  registerBtnText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   toolsLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 8 },
   toolCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 16 },
   toolIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 14 },

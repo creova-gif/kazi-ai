@@ -27,7 +27,7 @@ export default function ProfileScreen() {
   const stats = [
     { icon: 'briefcase', value: state.appliedJobs.length.toString(), label: t('Applied', 'Maombi') },
     { icon: 'bookmark', value: state.savedJobs.length.toString(), label: t('Saved', 'Zilizohifadhiwa') },
-    { icon: 'school', value: cv.education.length.toString(), label: t('Education', 'Elimu') },
+    { icon: 'business', value: state.followedCompanies.length.toString(), label: t('Following', 'Wanaofuatwa') },
     { icon: 'construct', value: cv.skills.length.toString(), label: t('Skills', 'Ujuzi') },
   ];
 
@@ -83,6 +83,12 @@ export default function ProfileScreen() {
               <View style={styles.metaChip}>
                 <Ionicons name="mail-outline" size={12} color="rgba(245,240,232,0.7)" />
                 <Text style={styles.metaChipText}>{cv.email}</Text>
+              </View>
+            ) : null}
+            {cv.institution ? (
+              <View style={styles.metaChip}>
+                <Ionicons name="school-outline" size={12} color="rgba(245,240,232,0.7)" />
+                <Text style={styles.metaChipText}>{cv.institution}{cv.gradYear ? ` · ${cv.gradYear}` : ''}</Text>
               </View>
             ) : null}
           </View>

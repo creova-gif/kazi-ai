@@ -23,7 +23,6 @@ export default function TabLayout() {
   const colors = useColors();
   const { state } = useApp();
   const lang = state.language;
-
   const t = (en: string, sw: string) => lang === 'sw' ? sw : en;
 
   return (
@@ -40,7 +39,7 @@ export default function TabLayout() {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
       }}
     >
       <Tabs.Screen
@@ -58,6 +57,15 @@ export default function TabLayout() {
           title: t('Jobs', 'Kazi'),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name={focused ? 'briefcase' : 'briefcase-outline'} focused={focused} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="companies"
+        options={{
+          title: t('Companies', 'Makampuni'),
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'business' : 'business-outline'} focused={focused} color={color} />
           ),
         }}
       />
