@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Language = 'sw' | 'en';
 export type JobSector = 'government' | 'ngo' | 'private' | 'informal' | 'tech' | 'health' | 'education' | 'finance';
+export type EACountry = 'Tanzania' | 'Kenya' | 'Uganda' | 'Rwanda' | 'Ethiopia' | 'Other';
 
 export interface WorkExperience {
   id: string;
@@ -48,6 +49,7 @@ export interface CV {
   phone: string;
   email: string;
   location: string;
+  country: EACountry;
   linkedin: string;
   summary: string;
   experience: WorkExperience[];
@@ -89,7 +91,7 @@ const makeId = () => Date.now().toString() + Math.random().toString(36).substr(2
 
 const defaultCV: CV = {
   firstName: '', lastName: '', title: '', phone: '', email: '',
-  location: '', linkedin: '', summary: '',
+  location: '', country: 'Tanzania', linkedin: '', summary: '',
   experience: [], education: [], skills: [],
   languages: [{ lang: 'Kiswahili', level: 'Native' }, { lang: 'English', level: 'Fluent' }],
   references: [], targetSector: [], experienceLevel: 'entry', educationLevel: 'degree',

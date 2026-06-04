@@ -6,7 +6,16 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { useApp, type JobSector } from '@/context/AppContext';
+import { useApp, type JobSector, type EACountry } from '@/context/AppContext';
+
+const COUNTRIES: { id: EACountry; label: string; flag: string }[] = [
+  { id: 'Tanzania', label: 'Tanzania', flag: '🇹🇿' },
+  { id: 'Kenya', label: 'Kenya', flag: '🇰🇪' },
+  { id: 'Uganda', label: 'Uganda', flag: '🇺🇬' },
+  { id: 'Rwanda', label: 'Rwanda', flag: '🇷🇼' },
+  { id: 'Ethiopia', label: 'Ethiopia', flag: '🇪🇹' },
+  { id: 'Other', label: 'Other', flag: '🌍' },
+];
 
 const SECTORS: { id: JobSector; label: string; labelSw: string }[] = [
   { id: 'government', label: 'Government', labelSw: 'Serikali' },
@@ -21,8 +30,8 @@ const SECTORS: { id: JobSector; label: string; labelSw: string }[] = [
 
 const EXP_LEVELS = [
   { id: 'none', label: 'Student / Fresh', labelSw: 'Mwanafunzi / Mpya' },
-  { id: 'entry', label: 'Entry Level (0-2 yrs)', labelSw: 'Mwanzo (0-2 miaka)' },
-  { id: 'mid', label: 'Mid Level (3-7 yrs)', labelSw: 'Kati (3-7 miaka)' },
+  { id: 'entry', label: 'Entry Level (0–2 yrs)', labelSw: 'Mwanzo (0–2 miaka)' },
+  { id: 'mid', label: 'Mid Level (3–7 yrs)', labelSw: 'Kati (3–7 miaka)' },
   { id: 'senior', label: 'Senior (8+ yrs)', labelSw: 'Mkuwa (8+ miaka)' },
 ];
 
@@ -37,6 +46,7 @@ export default function SetupScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [location, setLocation] = useState('');
+  const [country, setCountry] = useState<EACountry>('Tanzania');
   const [selectedSectors, setSelectedSectors] = useState<JobSector[]>([]);
   const [expLevel, setExpLevel] = useState<'none' | 'entry' | 'mid' | 'senior'>('entry');
 
@@ -52,7 +62,7 @@ export default function SetupScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     updateCV({
       firstName: firstName.trim(), lastName: lastName.trim(),
-      phone, email, location,
+      phone, email, location, country,
       targetSector: selectedSectors, experienceLevel: expLevel,
     });
     completeOnboarding();
@@ -71,7 +81,7 @@ export default function SetupScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.heading}>{t('Tell us about yourself', 'Tuambie kuhusu wewe')}</Text>
-        <Text style={styles.sub}>{t('This helps us personalise your CV and job matches', 'Hii husaidia kubinafsisha CV na mechi za kazi')}</Text>
+        <Text style={styles.sub}>{t('Personalise your CV and job matches across East Africa', 'Binafsisha CV na mechi za kazi Afrika Mashariki')}</Text>
 
         <Text style={styles.label}>{t('First Name *', 'Jina la Kwanza *')}</Text>
         <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="e.g. Amina" placeholderTextColor="#8A7D6E" />
@@ -85,8 +95,24 @@ export default function SetupScreen() {
         <Text style={styles.label}>{t('Email', 'Barua Pepe')}</Text>
         <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="example@email.com" keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#8A7D6E" />
 
-        <Text style={styles.label}>{t('Location', 'Mahali')}</Text>
-        <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="e.g. Dar es Salaam" placeholderTextColor="#8A7D6E" />
+        <Text style={styles.label}>{t('City / Location', 'Mji / Mahali')}</Text>
+        <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder={t('e.g. Dar es Salaam, Nairobi…', 'k.m. Dar es Salaam, Nairobi…')} placeholderTextColor="#8A7D6E" />
+
+        <Text style={styles.label}>{t('Country', 'Nchi')}</Text>
+        <View style={styles.chipRow}>
+          {COUNTRIES.map(c => (
+            <TouchableOpacity
+              key={c.id}
+              style={[styles.chip, country === c.id && styles.chipActive]}
+              onPress={() => { Haptics.selectionAsync(); setCountry(c.id); }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.chipText, country === c.id && styles.chipTextActive]}>
+                {c.flag} {c.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <Text style={styles.label}>{t('Experience Level', 'Kiwango cha Uzoefu')}</Text>
         <View style={styles.chipRow}>

@@ -1,0 +1,2 @@
+- [KaziAI stack & quirks](kaziaistack.md) — Expo 55, expo-router, Babel __self patch, logbox stub — key env fixes to not undo
+- [East Africa expansion](ea-expansion.md) — App covers TZ/KE/UG/RW/ET/Remote; Job interface has country+flag; EACountry type in AppContext

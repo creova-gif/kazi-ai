@@ -9,6 +9,11 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useApp, type Language } from '@/context/AppContext';
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  Tanzania: '🇹🇿', Kenya: '🇰🇪', Uganda: '🇺🇬',
+  Rwanda: '🇷🇼', Ethiopia: '🇪🇹', Other: '🌍',
+};
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -29,7 +34,10 @@ export default function ProfileScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out KaziAI – the AI-powered CV builder for Tanzania! 🇹🇿\nDownload: kaziaiapp.com`,
+        message: t(
+          `Check out KaziAI – the AI-powered CV builder & job platform for East Africa! 🌍\nDownload: kaziaiapp.com`,
+          `Angalia KaziAI – programu ya AI ya kujenga CV na kutafuta kazi Afrika Mashariki! 🌍\nPakua: kaziaiapp.com`
+        ),
         title: 'KaziAI',
       });
     } catch {}
@@ -47,6 +55,7 @@ export default function ProfileScreen() {
   };
 
   const cvComplete = !!(cv.firstName && cv.email && cv.summary && cv.experience.length > 0 && cv.education.length > 0);
+  const countryFlag = cv.country ? (COUNTRY_FLAGS[cv.country] ?? '🌍') : '🌍';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -66,8 +75,8 @@ export default function ProfileScreen() {
           <View style={styles.profileMeta}>
             {cv.location ? (
               <View style={styles.metaChip}>
-                <Ionicons name="location-outline" size={12} color="rgba(245,240,232,0.7)" />
-                <Text style={styles.metaChipText}>{cv.location}</Text>
+                <Text style={{ fontSize: 12 }}>{countryFlag}</Text>
+                <Text style={styles.metaChipText}>{cv.location}{cv.country ? `, ${cv.country}` : ''}</Text>
               </View>
             ) : null}
             {cv.email ? (
@@ -116,8 +125,19 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* EA Presence */}
+        <View style={[styles.eaBanner, { backgroundColor: colors.card, marginHorizontal: 16, marginBottom: 16 }]}>
+          <Text style={styles.eaFlag}>🌍</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.eaTitle, { color: colors.foreground }]}>{t('East Africa Network', 'Mtandao Afrika Mashariki')}</Text>
+            <Text style={[styles.eaSub, { color: colors.muted }]}>
+              {t('Your profile is visible to employers across Tanzania, Kenya, Uganda, Rwanda & Ethiopia.', 'Wasifu wako unaonekana kwa waajiri Tanzania, Kenya, Uganda, Rwanda na Ethiopia.')}
+            </Text>
+          </View>
+        </View>
+
         {/* Settings section */}
-        <Text style={[styles.sectionLabel, { color: colors.muted, marginHorizontal: 20, marginTop: 24, marginBottom: 8 }]}>{t('SETTINGS', 'MIPANGILIO')}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.muted, marginHorizontal: 20, marginTop: 8, marginBottom: 8 }]}>{t('SETTINGS', 'MIPANGILIO')}</Text>
 
         <TouchableOpacity style={[styles.settingRow, { backgroundColor: colors.card, marginHorizontal: 16 }]} onPress={() => setShowLangPicker(true)}>
           <View style={[styles.settingIcon, { backgroundColor: 'rgba(231,99,59,0.10)' }]}>
@@ -136,7 +156,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.settingText}>
             <Text style={[styles.settingTitle, { color: colors.foreground }]}>{t('Share KaziAI', 'Shiriki KaziAI')}</Text>
-            <Text style={[styles.settingSub, { color: colors.muted }]}>{t('Tell your friends about KaziAI', 'Mwambie rafiki yako')}</Text>
+            <Text style={[styles.settingSub, { color: colors.muted }]}>{t('Tell your network about KaziAI', 'Mwambie mtandao wako kuhusu KaziAI')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </TouchableOpacity>
@@ -152,7 +172,7 @@ export default function ProfileScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </TouchableOpacity>
 
-        <Text style={[styles.version, { color: colors.muted }]}>KaziAI v1.0 · Made with care for Tanzania</Text>
+        <Text style={[styles.version, { color: colors.muted }]}>KaziAI v1.0 · Built for East Africa 🌍</Text>
       </ScrollView>
 
       {/* Language picker modal */}
@@ -207,6 +227,10 @@ const styles = StyleSheet.create({
   skillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   skillChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   skillChipText: { fontSize: 12, fontWeight: '500' },
+  eaBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderRadius: 16, padding: 16 },
+  eaFlag: { fontSize: 28, marginTop: 2 },
+  eaTitle: { fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  eaSub: { fontSize: 12, lineHeight: 18 },
   settingRow: {
     flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 14, marginBottom: 10,
     shadowColor: '#1A1410', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1,
