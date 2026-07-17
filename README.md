@@ -10,7 +10,7 @@
 
 Kazi ("kazi" — Swahili for work/job) is a mobile app (Expo) that helps job seekers build stronger applications: a CV builder with AI scoring and summaries, interview prep, a career-path explorer, a networking kit, a soft-skills trainer, and a skills-gap coach. It also includes company/job browsing and an onboarding flow with language selection.
 
-[ADD SCREENSHOT HERE]
+![Kazi AI landing page](docs/screenshots/dashboard.png)
 
 ## Status: In active development
 
