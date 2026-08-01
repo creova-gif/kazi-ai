@@ -8,22 +8,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
-
-const ANTHROPIC_HEADERS = {
-  'Content-Type': 'application/json',
-  'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '',
-  'anthropic-version': '2023-06-01',
-  'anthropic-dangerous-direct-browser-access': 'true',
-};
+import { callAI } from '@/lib/aiClient';
 
 const callClaude = async (prompt: string, maxTokens = 600) => {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: ANTHROPIC_HEADERS,
-    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
-  });
-  const data = await res.json();
-  return data.content?.[0]?.text ?? '';
+  return callAI({ max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] });
 };
 
 interface CareerEvent {
@@ -39,13 +27,23 @@ interface CareerEvent {
   color: string;
 }
 
+const formatEventDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const daysFromNow = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return formatEventDate(d);
+};
+
+// Sample/illustrative events — dates are computed relative to today rather
+// than hardcoded to a fixed year, so this list never silently shows past
+// events as "upcoming" (see kazi-ai audit, 2026-07-30).
 const EVENTS: CareerEvent[] = [
-  { id: 'e1', title: 'KaziAI East Africa Career Fair', organizer: 'KaziAI', date: 'Jul 15, 2026', country: 'East Africa', flag: '🌍', city: 'Virtual', type: 'virtual', sector: 'All Sectors', color: '#E7633B' },
-  { id: 'e2', title: 'Nairobi Tech Week Jobs Fair', organizer: 'iHub Nairobi', date: 'Jul 22, 2026', country: 'Kenya', flag: '🇰🇪', city: 'Nairobi', type: 'in-person', sector: 'Tech', color: '#2D6A4F' },
-  { id: 'e3', title: 'Dar es Salaam Graduate Expo', organizer: 'UDSM Career Centre', date: 'Aug 5, 2026', country: 'Tanzania', flag: '🇹🇿', city: 'Dar es Salaam', type: 'hybrid', sector: 'All Sectors', color: '#1A5276' },
-  { id: 'e4', title: 'Kigali Innovation & Jobs Conference', organizer: 'RDB Rwanda', date: 'Aug 10, 2026', country: 'Rwanda', flag: '🇷🇼', city: 'Kigali', type: 'in-person', sector: 'Tech & Finance', color: '#6B5CDE' },
-  { id: 'e5', title: 'East Africa NGO Jobs Forum', organizer: 'NGO Network EA', date: 'Aug 20, 2026', country: 'Uganda', flag: '🇺🇬', city: 'Kampala', type: 'in-person', sector: 'NGO/Development', color: '#E7A43B' },
-  { id: 'e6', title: 'Addis Ababa Careers Week', organizer: 'AAU Career Services', date: 'Sep 3, 2026', country: 'Ethiopia', flag: '🇪🇹', city: 'Addis Ababa', type: 'hybrid', sector: 'All Sectors', color: '#C0392B' },
+  { id: 'e1', title: 'KaziAI East Africa Career Fair', organizer: 'KaziAI', date: daysFromNow(14), country: 'East Africa', flag: '🌍', city: 'Virtual', type: 'virtual', sector: 'All Sectors', color: '#E7633B' },
+  { id: 'e2', title: 'Nairobi Tech Week Jobs Fair', organizer: 'iHub Nairobi', date: daysFromNow(21), country: 'Kenya', flag: '🇰🇪', city: 'Nairobi', type: 'in-person', sector: 'Tech', color: '#2D6A4F' },
+  { id: 'e3', title: 'Dar es Salaam Graduate Expo', organizer: 'UDSM Career Centre', date: daysFromNow(35), country: 'Tanzania', flag: '🇹🇿', city: 'Dar es Salaam', type: 'hybrid', sector: 'All Sectors', color: '#1A5276' },
+  { id: 'e4', title: 'Kigali Innovation & Jobs Conference', organizer: 'RDB Rwanda', date: daysFromNow(40), country: 'Rwanda', flag: '🇷🇼', city: 'Kigali', type: 'in-person', sector: 'Tech & Finance', color: '#6B5CDE' },
+  { id: 'e5', title: 'East Africa NGO Jobs Forum', organizer: 'NGO Network EA', date: daysFromNow(50), country: 'Uganda', flag: '🇺🇬', city: 'Kampala', type: 'in-person', sector: 'NGO/Development', color: '#E7A43B' },
+  { id: 'e6', title: 'Addis Ababa Careers Week', organizer: 'AAU Career Services', date: daysFromNow(64), country: 'Ethiopia', flag: '🇪🇹', city: 'Addis Ababa', type: 'hybrid', sector: 'All Sectors', color: '#C0392B' },
 ];
 
 type Tool = 'interview' | 'skills' | 'coach' | 'networking' | null;
@@ -136,7 +134,7 @@ export default function PrepScreen() {
                     >
                       <Ionicons name={isRegistered ? 'checkmark-circle' : 'add-circle-outline'} size={13} color="#fff" />
                       <Text style={styles.registerBtnText}>
-                        {isRegistered ? t('Registered ✓', 'Umesajiliwa ✓') : t('Register', 'Jiandikishe')}
+                        {isRegistered ? t('Interested ✓', 'Ninavutiwa ✓') : t("I'm interested", 'Ninavutiwa')}
                       </Text>
                     </TouchableOpacity>
                   </View>

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
+import { callAI } from '@/lib/aiClient';
 
 export interface Job {
   id: string;
@@ -26,9 +27,17 @@ export interface Job {
   applyUrl: string;
 }
 
+// Seed deadlines are stored as "Mon D" with no year. Resolve to the nearest
+// upcoming occurrence (this year, or next year if it already passed) so
+// sample listings don't permanently render as expired — this is sample
+// data, not live postings; see the "sample roles" disclosure in the UI.
 const getDaysLeft = (deadline: string): number => {
-  const d = new Date(deadline + ', 2026');
   const now = new Date();
+  const year = now.getFullYear();
+  let d = new Date(`${deadline}, ${year}`);
+  if (d.getTime() < now.getTime()) {
+    d = new Date(`${deadline}, ${year + 1}`);
+  }
   return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 };
 
@@ -174,7 +183,7 @@ export default function JobsScreen() {
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: colors.foreground }]}>🌍 {t('East Africa Jobs', 'Kazi Afrika Mashariki')}</Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>
-            {activeTab === 'all' ? `${filtered.length} ${t('opportunities', 'nafasi')}` :
+            {activeTab === 'all' ? `${filtered.length} ${t('sample opportunities', 'nafasi za mfano')}` :
               activeTab === 'discover' ? t('Curated collections', 'Makusanyo yaliyochaguliwa') :
               activeTab === 'matches' ? `${filtered.length} ${t('matched roles', 'nafasi zinazolingana')}` :
               `${filtered.length} ${t('saved jobs', 'kazi zilizohifadhiwa')}`}
@@ -390,13 +399,7 @@ Job: ${job.title} at ${job.company}, ${job.country}.
 Applicant: ${cv.firstName} ${cv.lastName}, Phone: ${cv.phone}.
 Use formal East Africa letter format. Start Swahili version with "Mheshimiwa".`;
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 800, messages: [{ role: 'user', content: prompt }] }),
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text ?? '';
+      const text = await callAI({ max_tokens: 800, messages: [{ role: 'user', content: prompt }] });
       if (type === 'cover') { setCoverLetter(text); setShowCover(true); }
       else { setAppLetter(text); setShowAppLetter(true); }
     } catch {
@@ -459,7 +462,7 @@ Use formal East Africa letter format. Start Swahili version with "Mheshimiwa".`;
             </View>
           ))}
           <Text style={[detailStyles.deadline, { color: colors.muted, marginTop: 16 }]}>
-            {t('Deadline:', 'Muda wa Mwisho:')} {job.deadline}, 2026
+            {t('Deadline:', 'Muda wa Mwisho:')} {job.deadline}
           </Text>
           <View style={detailStyles.actionGrid}>
             <TouchableOpacity style={[detailStyles.actionBtn, { backgroundColor: colors.sand, flex: 1 }]} onPress={() => generateLetter('cover')} disabled={loading}>
@@ -477,11 +480,19 @@ Use formal East Africa letter format. Start Swahili version with "Mheshimiwa".`;
           >
             <Ionicons name={isApplied ? 'checkmark-circle' : 'open-outline'} size={18} color="#fff" />
             <Text style={detailStyles.applyBtnText}>
-              {isApplied ? t('Applied ✓', 'Umeomba ✓') : t('Apply Now →', 'Omba Sasa →')}
+              {isApplied ? t('Applied ✓', 'Umeomba ✓') : t('Go to Careers Page →', 'Nenda Ukurasa wa Kazi →')}
             </Text>
           </TouchableOpacity>
           {job.applyUrl ? (
-            <Text style={[{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 6 }]}>{job.applyUrl}</Text>
+            <>
+              <Text style={[{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 6 }]}>{job.applyUrl}</Text>
+              <Text style={[{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 2, paddingHorizontal: 24 }]}>
+                {t(
+                  "This is the employer's general careers page — this listing is a sample, so confirm the specific role is actually open there.",
+                  'Huu ni ukurasa wa jumla wa kazi wa mwajiri — tangazo hili ni la mfano, hivyo hakikisha nafasi hiyo mahususi ipo kweli.'
+                )}
+              </Text>
+            </>
           ) : null}
         </ScrollView>
         <LetterSheet visible={showCover} onClose={() => setShowCover(false)} title={t('Cover Letter', 'Barua ya Nia')} text={coverLetter} lang={lang} />
@@ -577,6 +588,15 @@ function SalaryModal({ visible, onClose, lang }: { visible: boolean; onClose: ()
           <View style={{ width: 26 }} />
         </View>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: colors.sand, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 12, marginBottom: 16 }}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.muted} />
+            <Text style={{ fontSize: 12, lineHeight: 17, flex: 1, color: colors.foreground2 }}>
+              {t(
+                'Illustrative estimates, not sourced market data — treat as a rough guide, not a verified benchmark.',
+                'Makadirio ya mfano, si data ya soko iliyothibitishwa — yatumie kama mwongozo, si kigezo halisi.'
+              )}
+            </Text>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
             {(Object.entries(countryLabels) as any[]).map(([code, label]: any) => (
               <TouchableOpacity key={code}

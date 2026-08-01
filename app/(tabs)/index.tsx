@@ -9,8 +9,20 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useApp, type WorkExperience, type Education, type Skill, type Reference } from '@/context/AppContext';
+import { callAI } from '@/lib/aiClient';
 
 const makeId = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
+
+const confirmDelete = (t: (en: string, sw: string) => string, onConfirm: () => void) => {
+  Alert.alert(
+    t('Delete this entry?', 'Futa kipengele hiki?'),
+    t('This cannot be undone.', 'Huwezi kurudisha baada ya hii.'),
+    [
+      { text: t('Cancel', 'Ghairi'), style: 'cancel' },
+      { text: t('Delete', 'Futa'), style: 'destructive', onPress: onConfirm },
+    ]
+  );
+};
 
 type SectionType = 'info' | 'summary' | 'experience' | 'education' | 'skills' | 'languages' | 'references' | 'score' | 'preview' | null;
 
@@ -52,18 +64,7 @@ export default function CVBuilderScreen() {
       ? `Andika muhtasari wa kitaaluma kwa ajili ya CV kwa Kiingereza (paragraphs 2-3, maneno 80-100). Mtu: ${cv.firstName} ${cv.lastName}, Kiwango: ${cv.experienceLevel}, Elimu: ${cv.educationLevel}, Ujuzi: ${cv.skills.map(s => s.name).join(', ')}. Fanya iwe ya kuvutia na ya kitaalamu.`
       : `Write a professional CV summary for: ${cv.firstName} ${cv.lastName}, Level: ${cv.experienceLevel}, Skills: ${cv.skills.map(s => s.name).join(', ')}, Education: ${cv.educationLevel}${cv.institution ? ', Institution: ' + cv.institution : ''}. 2-3 sentences, 60-80 words, East Africa job market context. Be specific and impactful.`;
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }),
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text ?? '';
+      const text = await callAI({ max_tokens: 300, messages: [{ role: 'user', content: prompt }] });
       setAiResult(text);
     } catch {
       setAiResult(t('Failed to generate. Please try again.', 'Imeshindwa. Jaribu tena.'));
@@ -77,19 +78,8 @@ export default function CVBuilderScreen() {
     const prompt = `Score this CV for the East Africa job market (1-100). Name: ${cv.firstName} ${cv.lastName}, Summary: "${cv.summary?.slice(0, 200)}", Experience: ${cv.experience.length} items, Education: ${cv.education.length} items, Skills: ${cv.skills.map(s => s.name).join(', ')}.
 Respond ONLY as JSON: {"score": 72, "feedback": ["strength1","strength2"], "improvements": ["tip1","tip2","tip3"]}`;
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 500, messages: [{ role: 'user', content: prompt }] }),
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text ?? '{}';
-      const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+      const text = await callAI({ max_tokens: 500, messages: [{ role: 'user', content: prompt }] });
+      const json = JSON.parse((text || '{}').replace(/```json|```/g, '').trim());
       setAiScore(json);
     } catch {
       setAiScore({ score: 0, feedback: [], improvements: [t('Could not analyse CV.', 'Imeshindwa kuchambua CV.')] });
@@ -407,7 +397,7 @@ function ExperienceModal({ visible, onClose, lang }: { visible: boolean; onClose
                 <Text style={[modalStyles.itemSub, { color: colors.muted }]}>{exp.company} · {exp.location}</Text>
                 <Text style={[modalStyles.itemDate, { color: colors.muted }]}>{exp.startDate} – {exp.current ? t('Present', 'Sasa') : exp.endDate}</Text>
               </View>
-              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); removeExperience(exp.id); }}>
+              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); confirmDelete(t, () => removeExperience(exp.id)); }}>
                 <Ionicons name="trash-outline" size={20} color={colors.error} />
               </TouchableOpacity>
             </View>
@@ -500,7 +490,7 @@ function EducationModal({ visible, onClose, lang }: { visible: boolean; onClose:
                 <Text style={[modalStyles.itemSub, { color: colors.muted }]}>{edu.institution}</Text>
                 <Text style={[modalStyles.itemDate, { color: colors.muted }]}>{edu.year}{edu.grade ? ` · ${edu.grade}` : ''}</Text>
               </View>
-              <TouchableOpacity onPress={() => removeEducation(edu.id)}>
+              <TouchableOpacity onPress={() => confirmDelete(t, () => removeEducation(edu.id))}>
                 <Ionicons name="trash-outline" size={20} color={colors.error} />
               </TouchableOpacity>
             </View>
@@ -605,7 +595,7 @@ function SkillsModal({ visible, onClose, lang }: { visible: boolean; onClose: ()
           <View style={modalStyles.chipRow}>
             {state.cv.skills.map(sk => (
               <TouchableOpacity key={sk.id} style={[modalStyles.chip, { backgroundColor: colors.sand, borderColor: colors.sand2 }]}
-                onPress={() => { removeSkill(sk.id); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); confirmDelete(t, () => removeSkill(sk.id)); }}>
                 <Text style={[modalStyles.chipText, { color: colors.foreground }]}>{sk.name}</Text>
                 <Ionicons name="close" size={12} color={colors.muted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -699,7 +689,7 @@ function ReferencesModal({ visible, onClose, lang }: { visible: boolean; onClose
                 <Text style={[modalStyles.itemSub, { color: colors.muted }]}>{ref.title} · {ref.company}</Text>
                 <Text style={[modalStyles.itemDate, { color: colors.muted }]}>{ref.phone}</Text>
               </View>
-              <TouchableOpacity onPress={() => removeReference(ref.id)}>
+              <TouchableOpacity onPress={() => confirmDelete(t, () => removeReference(ref.id))}>
                 <Ionicons name="trash-outline" size={20} color={colors.error} />
               </TouchableOpacity>
             </View>
@@ -775,6 +765,12 @@ function ScoreModal({ visible, onClose, lang, score }: { visible: boolean; onClo
                 {score.score >= 80 ? t('Excellent! Top-tier CV.', 'Bora! CV ya hali ya juu.') :
                   score.score >= 60 ? t('Good CV. Room to improve.', 'CV nzuri. Bado inaweza kuboresha.') :
                   t('Needs work. Follow tips below.', 'Inahitaji kazi. Fuata vidokezo.')}
+              </Text>
+              <Text style={{ color: colors.muted, fontSize: 12, textAlign: 'center', marginTop: 6, marginBottom: 4, paddingHorizontal: 12 }}>
+                {t(
+                  'AI-generated estimate — not verified against real hiring outcomes. Use it as one input, not a final judgement.',
+                  'Makadirio yaliyotengenezwa na AI — hayajathibitishwa dhidi ya matokeo halisi ya ajira. Yatumie kama mwongozo mmoja, si hukumu ya mwisho.'
+                )}
               </Text>
               {score.feedback?.length > 0 && (
                 <View style={[modalStyles.addForm, { backgroundColor: colors.sand, borderColor: colors.sand2, width: '100%' }]}>

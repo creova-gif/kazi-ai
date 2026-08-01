@@ -34,11 +34,21 @@ localPort = 5000
 externalPort = 80
 
 [deployment]
-deploymentTarget = "static"
-build = ["pnpm", "run", "build"]
-publicDir = "dist"
+# Changed from "static" — the app now needs a running server (server/index.js)
+# to hold the Anthropic key server-side and proxy AI requests; there's no
+# frontend build step here anymore since the app ships as a native Expo
+# build (App Store / Play Store), not a static site — see
+# _archive/vite-web-prototype/README.md for why. Verify this target name
+# and settings in the Replit deploy UI before relying on it; "cloudrun" is
+# a reasonable default for a small always-on Node process.
+deploymentTarget = "cloudrun"
+build = ["pnpm", "install"]
+run = ["node", "server/index.js"]
 
 [userenv]
 
 [userenv.shared]
-EXPO_PUBLIC_ANTHROPIC_API_KEY = "USE_ANTHROPIC_API_KEY"
+# ANTHROPIC_API_KEY must be set as a Replit Secret (Secrets pane), not as a
+# literal value here — this file is committed to git. It is intentionally
+# NOT prefixed with EXPO_PUBLIC_/VITE_, so bundlers never inline it into
+# client code; server/index.js reads it via process.env.ANTHROPIC_API_KEY.

@@ -1,2 +1,10 @@
 packages:
   - '.'
+allowBuilds:
+  dtrace-provider: false
+overrides:
+  react-native-worklets: 0.7.4
+  tar: '>=7.5.21'
+  shell-quote: '>=1.8.4'
+  'ws@>=7.0.0 <7.5.11': '>=7.5.11'
+  'ws@>=8.0.0 <8.21.0': '>=8.21.0'

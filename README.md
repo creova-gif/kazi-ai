@@ -25,13 +25,19 @@ This is one of the more feature-complete prototypes in the portfolio (CV builder
 
 ```bash
 npm i
-npm run dev        # or: npm run android / npm run ios
+npm start          # or: npm run android / npm run ios / npm run web
 ```
+
+AI features call a small local proxy (`server/index.js`) that holds the
+Anthropic key server-side — run it alongside the app (`npm run serve`) with
+`ANTHROPIC_API_KEY` set in your environment. See `.env.example`.
 
 ## Folder overview
 
-- `app/(onboarding)/` and `app/(tabs)/` — Expo Router screens
-- `src/app/components/builder/` — CV builder, career tools, interview prep
+- `app/(onboarding)/` and `app/(tabs)/` — Expo Router screens (the shipping app)
+- `app/(tabs)/index.tsx` — CV builder; `app/(tabs)/prep.tsx` — career tools, interview prep
+- `server/` — Anthropic API proxy (keeps the key off the client)
+- `_archive/` — retired prototypes, not part of the shipping app
 
 ## Contributing
 

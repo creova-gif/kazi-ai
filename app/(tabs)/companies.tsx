@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, Modal, ScrollView,
+  TextInput, Modal, ScrollView, Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -518,7 +518,12 @@ function CompanyModal({ company, visible, onClose, lang }: { company: Company; v
                   ))}
                 </View>
 
-                <TouchableOpacity style={[styles.websiteBtn, { borderColor: company.logoColor }]}>
+                <TouchableOpacity
+                  style={[styles.websiteBtn, { borderColor: company.logoColor }]}
+                  onPress={() => Linking.openURL(company.website).catch(() => {})}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('View Careers Page', 'Angalia Ukurasa wa Kazi')}
+                >
                   <Ionicons name="open-outline" size={16} color={company.logoColor} />
                   <Text style={[styles.websiteBtnText, { color: company.logoColor }]}>{t('View Careers Page', 'Angalia Ukurasa wa Kazi')}</Text>
                 </TouchableOpacity>
@@ -545,15 +550,24 @@ function CompanyModal({ company, visible, onClose, lang }: { company: Company; v
 
             {tab === 'reviews' && (
               <>
+                <View style={[styles.sampleDataBanner, { backgroundColor: colors.sand, borderColor: colors.border }]}>
+                  <Ionicons name="information-circle-outline" size={16} color={colors.muted} />
+                  <Text style={[styles.sampleDataBannerText, { color: colors.foreground2 }]}>
+                    {t(
+                      'Sample content for illustration — not real employee submissions.',
+                      'Maudhui ya mfano kwa ajili ya kuonyesha — si maoni halisi kutoka kwa wafanyakazi.'
+                    )}
+                  </Text>
+                </View>
                 <View style={[styles.ratingOverview, { backgroundColor: colors.card }]}>
                   <Text style={[styles.bigRating, { color: colors.foreground }]}>{company.rating.toFixed(1)}</Text>
                   <StarRating rating={company.rating} size={20} />
-                  <Text style={[{ color: colors.muted, fontSize: 12, marginTop: 4 }]}>{t('Based on', 'Kulingana na')} {company.reviewCount} {t('reviews', 'maoni')}</Text>
+                  <Text style={[{ color: colors.muted, fontSize: 12, marginTop: 4 }]}>{t('Illustrative rating, based on', 'Kiwango cha mfano, kulingana na')} {company.reviewCount} {t('sample reviews', 'maoni ya mfano')}</Text>
                 </View>
                 {company.reviews.map((rev, i) => (
                   <View key={i} style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author}</Text>
+                      <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author} · {t('sample', 'mfano')}</Text>
                       <Text style={[{ color: colors.muted, fontSize: 11 }]}>{rev.date}</Text>
                     </View>
                     <StarRating rating={rev.rating} size={12} />
@@ -561,7 +575,7 @@ function CompanyModal({ company, visible, onClose, lang }: { company: Company; v
                   </View>
                 ))}
                 <Text style={[{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 12 }]}>
-                  {t('Reviews from employees and recent applicants.', 'Maoni kutoka kwa wafanyakazi na waombaji wa hivi karibuni.')}
+                  {t('These are illustrative example reviews, not verified submissions from real employees.', 'Haya ni maoni ya mfano kwa maonyesho, si maoni yaliyothibitishwa kutoka kwa wafanyakazi halisi.')}
                 </Text>
               </>
             )}
@@ -607,6 +621,8 @@ const styles = StyleSheet.create({
   miniJobMeta: { fontSize: 12, marginTop: 3 },
   miniJobSalary: { fontSize: 13, fontWeight: '600', marginTop: 4 },
   miniJobDeadline: { fontSize: 11, marginTop: 2 },
+  sampleDataBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 12 },
+  sampleDataBannerText: { fontSize: 12, lineHeight: 17, flex: 1 },
   ratingOverview: { borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 16 },
   bigRating: { fontSize: 48, fontWeight: '800', lineHeight: 52 },
   reviewCard: { borderRadius: 14, borderWidth: 1, padding: 16, marginBottom: 12 },
