@@ -1,0 +1,23 @@
+name: CI/CD Branching Pipeline
+
+on:
+  push:
+    branches: [dev, staging, main]
+  pull_request:
+    branches: [dev, staging, main]
+
+jobs:
+  validate:
+    name: Validate Code Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      # No lint/test/build scripts exist in this repo's package.json yet —
+      # this is a placeholder gate that at least confirms the dependency
+      # tree installs cleanly. Add real lint/test scripts and this job to
+      # match once they exist.
+      - run: npm ci
