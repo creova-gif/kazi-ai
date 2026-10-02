@@ -29,8 +29,11 @@ npm start          # or: npm run android / npm run ios / npm run web
 ```
 
 AI features call a small local proxy (`server/index.js`) that holds the
-Anthropic key server-side — run it alongside the app (`npm run serve`) with
-`ANTHROPIC_API_KEY` set in your environment. See `.env.example`.
+Anthropic key server-side. Run it alongside the app (`npm run serve`) with
+`ANTHROPIC_API_KEY` and `KAZI_APP_KEY` set. The app sends the matching
+`EXPO_PUBLIC_KAZI_APP_KEY` plus a task id — it does not choose the model or
+the prompt. The built-in rate limiter is in-memory and for local development
+only. See `.env.example`.
 
 ## Folder overview
 

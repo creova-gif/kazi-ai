@@ -10,10 +10,6 @@ import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/context/AppContext';
 import { callAI } from '@/lib/aiClient';
 
-const callClaude = async (prompt: string, maxTokens = 600) => {
-  return callAI({ max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] });
-};
-
 interface CareerEvent {
   id: string;
   title: string;
@@ -211,11 +207,13 @@ function InterviewModal({ visible, onClose, lang }: { visible: boolean; onClose:
     setLoading(true);
     setQuestions([]);
     const cv = state.cv;
-    const country = cv.country || 'East Africa';
-    const prompt = `Generate 6 ${category} job interview questions for a ${cv.experienceLevel}-level job seeker in ${country} (East Africa) targeting ${cv.targetSector.join(', ') || 'general'} sector. Include East Africa-specific context where relevant. For each question provide a brief tip.
-Respond ONLY as JSON array: [{"q": "question text", "tip": "brief tip"}]`;
     try {
-      const text = await callClaude(prompt, 800);
+      const text = await callAI('interview_questions', {
+        category,
+        experienceLevel: cv.experienceLevel,
+        country: cv.country || 'East Africa',
+        sectors: cv.targetSector,
+      });
       const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
       setQuestions(parsed);
     } catch {
@@ -228,9 +226,11 @@ Respond ONLY as JSON array: [{"q": "question text", "tip": "brief tip"}]`;
     if (!answer.trim()) return;
     setFeedbackLoading(true);
     setFeedback('');
-    const prompt = `Question: "${selectedQ}"\nCandidate's answer: "${answer}"\n\nProvide brief constructive feedback (2-3 sentences) for an East Africa job interview. Be encouraging but specific about improvements.`;
     try {
-      const text = await callClaude(prompt, 300);
+      const text = await callAI('interview_feedback', {
+        question: selectedQ,
+        answer,
+      });
       setFeedback(text);
     } catch {
       setFeedback(t('Could not get feedback.', 'Imeshindwa kupata maoni.'));
@@ -308,14 +308,14 @@ function SkillsModal({ visible, onClose, lang }: { visible: boolean; onClose: ()
     setLoading(true);
     setResult(null);
     const cv = state.cv;
-    const country = cv.country || 'East Africa';
-    const prompt = `Skills gap analysis for the East Africa job market (${country} context).
-Target role: "${targetRole}".
-Current skills: ${cv.skills.map(s => s.name).join(', ') || 'none listed'}.
-Experience: ${cv.experienceLevel}. Education: ${cv.educationLevel}.
-Respond ONLY as JSON: {"missing": ["skill1","skill2","skill3"], "present": ["skill1","skill2"], "tips": ["learning tip1","tip2","tip3"]}`;
     try {
-      const text = await callClaude(prompt, 600);
+      const text = await callAI('skills_gap', {
+        targetRole,
+        country: cv.country || 'East Africa',
+        skills: cv.skills.map(s => s.name),
+        experienceLevel: cv.experienceLevel,
+        educationLevel: cv.educationLevel,
+      });
       const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
       setResult(parsed);
     } catch {
@@ -407,10 +407,16 @@ function CoachModal({ visible, onClose, lang }: { visible: boolean; onClose: () 
     setLoading(true);
     const cv = state.cv;
     const history = state.coachMessages.slice(-6).map(m => ({ role: m.role, content: m.text }));
-    const systemContext = `You are KaziAI Career Coach, an expert in the East African job market covering Tanzania, Kenya, Uganda, Rwanda and Ethiopia. User background: ${cv.firstName} ${cv.lastName}, ${cv.experienceLevel} level, country: ${cv.country || 'East Africa'}, sector interest: ${cv.targetSector.join(', ')}. Give practical, specific advice for East Africa. Be encouraging and concise (2-4 sentences).`;
-    const prompt = `${systemContext}\n\nConversation:\n${history.map(h => `${h.role}: ${h.content}`).join('\n')}\nuser: ${msg}`;
     try {
-      const reply = await callClaude(prompt, 400);
+      const reply = await callAI('career_coach', {
+        firstName: cv.firstName,
+        lastName: cv.lastName,
+        experienceLevel: cv.experienceLevel,
+        country: cv.country || 'East Africa',
+        sectors: cv.targetSector,
+        history,
+        message: msg,
+      });
       addCoachMessage({ role: 'assistant', text: reply });
     } catch {
       addCoachMessage({ role: 'assistant', text: t('Sorry, I could not respond. Please try again.', 'Samahani, sikuweza kujibu. Jaribu tena.') });

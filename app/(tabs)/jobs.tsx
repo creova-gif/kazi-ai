@@ -389,17 +389,26 @@ function JobDetailModal({ job, visible, onClose, lang }: { job: Job; visible: bo
   const generateLetter = async (type: 'cover' | 'app') => {
     setLoading(true);
     const cv = state.cv;
-    const prompt = type === 'cover'
-      ? `Write a professional cover letter for a job applicant in East Africa (${job.country}).
-Job: ${job.title} at ${job.company}, ${job.location}.
-Applicant: ${cv.firstName} ${cv.lastName}, Skills: ${cv.skills.map(s => s.name).join(', ')}, Experience: ${cv.experienceLevel}.
-Make it compelling, 3 paragraphs, East Africa professional context. No placeholders.`
-      : `Write a formal application letter in English and Kiswahili for:
-Job: ${job.title} at ${job.company}, ${job.country}.
-Applicant: ${cv.firstName} ${cv.lastName}, Phone: ${cv.phone}.
-Use formal East Africa letter format. Start Swahili version with "Mheshimiwa".`;
     try {
-      const text = await callAI({ max_tokens: 800, messages: [{ role: 'user', content: prompt }] });
+      const text = type === 'cover'
+        ? await callAI('cover_letter', {
+            country: job.country,
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            firstName: cv.firstName,
+            lastName: cv.lastName,
+            skills: cv.skills.map(s => s.name),
+            experienceLevel: cv.experienceLevel,
+          })
+        : await callAI('application_letter', {
+            title: job.title,
+            company: job.company,
+            country: job.country,
+            firstName: cv.firstName,
+            lastName: cv.lastName,
+            phone: cv.phone,
+          });
       if (type === 'cover') { setCoverLetter(text); setShowCover(true); }
       else { setAppLetter(text); setShowAppLetter(true); }
     } catch {
