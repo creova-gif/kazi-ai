@@ -14,3 +14,4 @@ expo-env.d.ts
 # Build output
 dist/
 .expo/web/cache/
+.claude/skills/gstack/
