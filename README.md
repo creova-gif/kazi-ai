@@ -6,43 +6,50 @@
 ![License](https://img.shields.io/badge/license-proprietary-red)
 ![Platform](https://img.shields.io/badge/platform-React_Native_%2F_Expo-blue)
 
-## What this is
-
-Kazi ("kazi" — Swahili for work/job) is a mobile app (Expo) that helps job seekers build stronger applications: a CV builder with AI scoring and summaries, interview prep, a career-path explorer, a networking kit, a soft-skills trainer, and a skills-gap coach. It also includes company/job browsing and an onboarding flow with language selection.
-
 ![Kazi AI landing page](docs/screenshots/dashboard.png)
 
-## Status: In active development
+## Overview
+Kazi ("kazi" — Swahili for work/job) is a mobile app helping job seekers build stronger applications.
 
-This is one of the more feature-complete prototypes in the portfolio (CV builder through interview prep are all built out), but the AI scoring/coaching logic has not been validated against real hiring outcomes, and there's no job-listing data source wired up yet.
+## Problem
+Job seekers, especially first-time applicants, lack access to CV feedback, interview coaching, and career guidance that's normally gated behind expensive career coaches.
 
-### Roadmap
-- Wire a real job-listing/company data source
-- Validate AI CV scoring against real recruiter feedback
-- Backend/persistence layer
+## Solution
+An AI-scored CV builder, interview prep, career-path explorer, networking kit, soft-skills trainer, and skills-gap coach — plus company/job browsing.
 
-## Quickstart
+## Key Capabilities
+- CV builder with AI scoring and summaries
+- Interview prep, career path explorer
+- Networking kit, soft-skills trainer, skills-gap coach
 
+## Architecture
+Expo (React Native). AI features call a local proxy (`server/index.js`) that holds the Anthropic key server-side.
+
+## Getting Started
 ```bash
 npm i
 npm start          # or: npm run android / npm run ios / npm run web
 ```
+Run the AI proxy alongside the app (`npm run serve`) with `ANTHROPIC_API_KEY` set — see `.env.example`. Note: this repo previously had `react` missing from `package.json` entirely despite `react-dom` being declared, which broke install for anyone — check dependency declarations carefully before assuming they're complete.
 
-AI features call a small local proxy (`server/index.js`) that holds the
-Anthropic key server-side — run it alongside the app (`npm run serve`) with
-`ANTHROPIC_API_KEY` set in your environment. See `.env.example`.
-
-## Folder overview
-
-- `app/(onboarding)/` and `app/(tabs)/` — Expo Router screens (the shipping app)
+## Repository Structure
+- `app/(onboarding)/`, `app/(tabs)/` — Expo Router screens
 - `app/(tabs)/index.tsx` — CV builder; `app/(tabs)/prep.tsx` — career tools, interview prep
-- `server/` — Anthropic API proxy (keeps the key off the client)
-- `_archive/` — retired prototypes, not part of the shipping app
+- `server/` — Anthropic API proxy
+
+## Project Status
+One of the more feature-complete prototypes in the portfolio (CV builder through interview prep are built out), but AI scoring/coaching hasn't been validated against real hiring outcomes, and there's no job-listing data source wired up yet.
+
+## Roadmap
+- [ ] Wire a real job-listing/company data source
+- [ ] Validate AI CV scoring against real recruiter feedback
+- [ ] Backend/persistence layer
 
 ## Contributing
-
-See the [org-wide CONTRIBUTING.md](https://github.com/creova-gif/.github/blob/main/CONTRIBUTING.md) for guidelines, including our AI-assisted contribution policy.
+See the [org-wide CONTRIBUTING.md](https://github.com/creova-gif/.github/blob/main/CONTRIBUTING.md).
 
 ## License
-
 Proprietary — © CREOVA. All rights reserved.
+
+## Author / Organization
+Built by [Justin Mafie](https://github.com/creova-gif) under CREOVA.
