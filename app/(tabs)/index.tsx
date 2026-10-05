@@ -60,11 +60,16 @@ export default function CVBuilderScreen() {
   const generateSummary = async () => {
     setAiLoading(true);
     setAiResult('');
-    const prompt = lang === 'sw'
-      ? `Andika muhtasari wa kitaaluma kwa ajili ya CV kwa Kiingereza (paragraphs 2-3, maneno 80-100). Mtu: ${cv.firstName} ${cv.lastName}, Kiwango: ${cv.experienceLevel}, Elimu: ${cv.educationLevel}, Ujuzi: ${cv.skills.map(s => s.name).join(', ')}. Fanya iwe ya kuvutia na ya kitaalamu.`
-      : `Write a professional CV summary for: ${cv.firstName} ${cv.lastName}, Level: ${cv.experienceLevel}, Skills: ${cv.skills.map(s => s.name).join(', ')}, Education: ${cv.educationLevel}${cv.institution ? ', Institution: ' + cv.institution : ''}. 2-3 sentences, 60-80 words, East Africa job market context. Be specific and impactful.`;
     try {
-      const text = await callAI({ max_tokens: 300, messages: [{ role: 'user', content: prompt }] });
+      const text = await callAI('cv_summary', {
+        language: lang === 'sw' ? 'sw' : 'en',
+        firstName: cv.firstName,
+        lastName: cv.lastName,
+        experienceLevel: cv.experienceLevel,
+        educationLevel: cv.educationLevel,
+        institution: cv.institution,
+        skills: cv.skills.map(s => s.name),
+      });
       setAiResult(text);
     } catch {
       setAiResult(t('Failed to generate. Please try again.', 'Imeshindwa. Jaribu tena.'));
@@ -75,10 +80,15 @@ export default function CVBuilderScreen() {
   const scoreCV = async () => {
     setShowScore(true);
     setAiScore(null);
-    const prompt = `Score this CV for the East Africa job market (1-100). Name: ${cv.firstName} ${cv.lastName}, Summary: "${cv.summary?.slice(0, 200)}", Experience: ${cv.experience.length} items, Education: ${cv.education.length} items, Skills: ${cv.skills.map(s => s.name).join(', ')}.
-Respond ONLY as JSON: {"score": 72, "feedback": ["strength1","strength2"], "improvements": ["tip1","tip2","tip3"]}`;
     try {
-      const text = await callAI({ max_tokens: 500, messages: [{ role: 'user', content: prompt }] });
+      const text = await callAI('cv_score', {
+        firstName: cv.firstName,
+        lastName: cv.lastName,
+        summary: cv.summary?.slice(0, 200) ?? '',
+        experienceCount: cv.experience.length,
+        educationCount: cv.education.length,
+        skills: cv.skills.map(s => s.name),
+      });
       const json = JSON.parse((text || '{}').replace(/```json|```/g, '').trim());
       setAiScore(json);
     } catch {

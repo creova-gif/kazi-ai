@@ -1,69 +1,147 @@
 import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { requireAppDevice } from './auth.js';
+import { createMemoryRateLimitStore, createRateLimiter, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS } from './rateLimit.js';
+import { createSpendGuard } from './spendGuard.js';
+import { TaskError, buildTaskRequest } from './tasks.js';
 
-const PORT = process.env.PORT || 5000;
+// Server-owned pin. Client `model` is ignored. Override only via env or
+// the createApp option — never from the request.
+export const PINNED_MODEL = 'claude-opus-4-5';
 
-// Server-side only — never prefixed with EXPO_PUBLIC_/VITE_, so it is never
-// inlined into a client bundle. Set this via your host's secret manager
-// (e.g. Replit Secrets), not a committed file.
-const apiKey = process.env.ANTHROPIC_API_KEY;
-const anthropic = apiKey ? new Anthropic({ apiKey }) : null;
-if (!anthropic) {
-  console.warn('[server] ANTHROPIC_API_KEY is not set — /api/ai/generate will return 503 until it is.');
+function envNumber(name) {
+  const raw = process.env[name];
+  if (raw == null || String(raw).trim() === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
 }
 
-const app = express();
-app.use(express.json({ limit: '1mb' }));
-
-// Minimal in-memory sliding-window rate limit, per IP. Good enough for a
-// single-instance deploy; swap for a shared store (Redis, etc.) if this
-// process ever runs behind a load balancer with multiple instances.
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = 20;
-const requestLog = new Map();
-
-function rateLimit(req, res, next) {
-  const ip = req.ip;
-  const now = Date.now();
-  const recent = (requestLog.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  if (recent.length >= RATE_LIMIT_MAX_REQUESTS) {
-    return res.status(429).json({ error: 'Too many AI requests — please wait a few minutes and try again.' });
-  }
-  recent.push(now);
-  requestLog.set(ip, recent);
-  next();
+function isMainModule() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return import.meta.url === pathToFileURL(path.resolve(entry)).href;
 }
 
-const MAX_TOKENS_CEILING = 1500;
+export function createApp({
+  anthropic = null,
+  appKey = process.env.KAZI_APP_KEY || '',
+  model = process.env.KAZI_AI_MODEL || PINNED_MODEL,
+  rateLimitStore = createMemoryRateLimitStore(),
+  rateLimit = {},
+  spend = {},
+} = {}) {
+  const limit = rateLimit.max ?? RATE_LIMIT_MAX;
+  const windowMs = rateLimit.windowMs ?? RATE_LIMIT_WINDOW_MS;
+  const spendGuard = createSpendGuard({
+    capUsd: spend.capUsd !== undefined ? spend.capUsd : envNumber('KAZI_AI_SPEND_CAP_USD'),
+    alertUsd: spend.alertUsd !== undefined ? spend.alertUsd : envNumber('KAZI_AI_SPEND_ALERT_USD'),
+    usdPerMillionOutputTokens: spend.usdPerMillionOutputTokens !== undefined
+      ? spend.usdPerMillionOutputTokens
+      : envNumber('KAZI_AI_USD_PER_MILLION_OUTPUT_TOKENS'),
+    onAlert: spend.onAlert,
+    ledger: spend.ledger,
+  });
 
-app.post('/api/ai/generate', rateLimit, async (req, res) => {
+  const app = express();
+  app.disable('x-powered-by');
+  // Cloud Run (and most reverse proxies) terminate TLS and forward the client
+  // IP in X-Forwarded-For. Without trust proxy, req.ip is the proxy hop and
+  // per-IP rate limits collapse to one shared bucket.
+  app.set('trust proxy', 1);
+  app.use(express.json({ limit: '32kb' }));
+
+  const limitByIp = createRateLimiter({
+    store: rateLimitStore,
+    limit,
+    windowMs,
+    keyFn: (req) => `ip:${req.ip || req.socket?.remoteAddress || 'unknown'}`,
+  });
+  const limitByDevice = createRateLimiter({
+    store: rateLimitStore,
+    limit,
+    windowMs,
+    keyFn: (req) => (req.deviceId ? `device:${req.deviceId}` : ''),
+  });
+
+  app.post('/api/ai/generate', limitByIp, requireAppDevice(appKey), limitByDevice, async (req, res) => {
+    if (!anthropic) {
+      return res.status(503).json({ error: 'AI service is not configured.' });
+    }
+
+    // Client model, system, messages, and max_tokens are intentionally unused.
+    const body = req.body ?? {};
+    let built;
+    try {
+      built = buildTaskRequest(body.task, body.inputs);
+    } catch (err) {
+      if (err instanceof TaskError) {
+        return res.status(err.status).json({ error: err.message });
+      }
+      console.error('[server] task build failed:', err?.message || err);
+      return res.status(400).json({ error: 'Invalid task' });
+    }
+
+    try {
+      const gate = await spendGuard.beforeCall({ task: body.task, maxTokens: built.max_tokens });
+      if (!gate.ok) {
+        return res.status(429).json({ error: 'AI spend cap reached. Try again later.' });
+      }
+
+      try {
+        const result = await anthropic.messages.create({
+          model,
+          max_tokens: built.max_tokens,
+          system: built.system,
+          messages: built.messages,
+        });
+        try {
+          await spendGuard.record(gate.estimateUsd);
+        } catch (err) {
+          console.error('[spend] ledger record failed:', err?.message || err);
+        }
+        return res.json(result);
+      } catch (err) {
+        try {
+          await spendGuard.release(gate.estimateUsd);
+        } catch (releaseErr) {
+          console.error('[spend] ledger release failed:', releaseErr?.message || releaseErr);
+        }
+        console.error('[server] Anthropic proxy error:', err?.message || err);
+        return res.status(502).json({ error: 'AI request failed.' });
+      }
+    } catch (err) {
+      console.error('[server] Anthropic proxy error:', err?.message || err);
+      return res.status(502).json({ error: 'AI request failed.' });
+    }
+  });
+
+  return app;
+}
+
+if (isMainModule()) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const anthropic = apiKey ? new Anthropic({ apiKey }) : null;
+  const appKey = process.env.KAZI_APP_KEY || '';
+  const rateLimitStore = createMemoryRateLimitStore();
+
   if (!anthropic) {
-    return res.status(503).json({ error: 'AI service is not configured.' });
+    console.warn('[server] ANTHROPIC_API_KEY is not set — /api/ai/generate will return 503 until it is.');
+  }
+  if (!appKey) {
+    console.warn('[server] KAZI_APP_KEY is not set — /api/ai/generate will fail closed (503) until it is.');
+  }
+  if (rateLimitStore.devOnly) {
+    console.warn('[server] Rate limiter is the in-memory dev store. It does not survive restarts and is not shared across instances. Inject a shared store before launch.');
+  }
+  if (envNumber('KAZI_AI_SPEND_CAP_USD') == null) {
+    console.warn('[server] KAZI_AI_SPEND_CAP_USD is not set — the spend cap hook will not block calls. Set it, the token price, and an alert hook before launch.');
   }
 
-  const { model, max_tokens, messages, system } = req.body ?? {};
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ error: 'messages is required' });
-  }
-
-  try {
-    const result = await anthropic.messages.create({
-      model: model || 'claude-opus-4-5',
-      max_tokens: Math.min(Number(max_tokens) || 500, MAX_TOKENS_CEILING),
-      ...(system ? { system } : {}),
-      messages,
-    });
-    res.json(result);
-  } catch (err) {
-    console.error('[server] Anthropic proxy error:', err?.message || err);
-    res.status(502).json({ error: 'AI request failed.' });
-  }
-});
-
-// Pure API proxy — the app ships to the App Store / Play Store as a native
-// Expo build (see ../_archive/vite-web-prototype/README.md for why there's
-// no static site served here). If a web build is ever wanted, serve it via
-// Expo's own web target (`npm run web`) rather than adding one here.
-app.listen(PORT, () => {
-  console.log(`Kazi AI server listening on port ${PORT}`);
-});
+  const PORT = process.env.PORT || 5000;
+  const app = createApp({ anthropic, appKey, rateLimitStore });
+  app.listen(PORT, () => {
+    console.log(`Kazi AI server listening on port ${PORT}`);
+  });
+}
