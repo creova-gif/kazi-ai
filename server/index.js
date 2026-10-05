@@ -46,6 +46,10 @@ export function createApp({
 
   const app = express();
   app.disable('x-powered-by');
+  // Cloud Run (and most reverse proxies) terminate TLS and forward the client
+  // IP in X-Forwarded-For. Without trust proxy, req.ip is the proxy hop and
+  // per-IP rate limits collapse to one shared bucket.
+  app.set('trust proxy', 1);
   app.use(express.json({ limit: '32kb' }));
 
   const limitByIp = createRateLimiter({
@@ -85,18 +89,28 @@ export function createApp({
         return res.status(429).json({ error: 'AI spend cap reached. Try again later.' });
       }
 
-      const result = await anthropic.messages.create({
-        model,
-        max_tokens: built.max_tokens,
-        system: built.system,
-        messages: built.messages,
-      });
       try {
-        await spendGuard.record(gate.estimateUsd);
+        const result = await anthropic.messages.create({
+          model,
+          max_tokens: built.max_tokens,
+          system: built.system,
+          messages: built.messages,
+        });
+        try {
+          await spendGuard.record(gate.estimateUsd);
+        } catch (err) {
+          console.error('[spend] ledger record failed:', err?.message || err);
+        }
+        return res.json(result);
       } catch (err) {
-        console.error('[spend] ledger record failed:', err?.message || err);
+        try {
+          await spendGuard.release(gate.estimateUsd);
+        } catch (releaseErr) {
+          console.error('[spend] ledger release failed:', releaseErr?.message || releaseErr);
+        }
+        console.error('[server] Anthropic proxy error:', err?.message || err);
+        return res.status(502).json({ error: 'AI request failed.' });
       }
-      return res.json(result);
     } catch (err) {
       console.error('[server] Anthropic proxy error:', err?.message || err);
       return res.status(502).json({ error: 'AI request failed.' });

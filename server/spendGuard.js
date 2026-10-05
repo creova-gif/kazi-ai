@@ -7,20 +7,54 @@
 // - alertUsd: onAlert fires when projected spend crosses this line. The call
 //   is still allowed until the cap.
 // - onAlert: replace this to page a person. The default only logs.
-// - ledger: optional shared counter { total(), add(usd) }. The built-in
-//   counter is process-local, same caveat as the dev rate-limit store.
+// - ledger: optional shared counter. Preferred shape:
+//     { total(), reserve(usd), commit(usd), release(usd) }
+//   Legacy { total(), add(usd) } still works via an adapter, but concurrent
+//   requests can overshoot the cap without reserve().
 //
 // If a cap is set but the token price is not, calls are refused. A cap
 // without a price would not actually limit spend.
 
 function memoryLedger() {
   let spentUsd = 0;
+  let reservedUsd = 0;
   return {
     async total() {
-      return spentUsd;
+      return spentUsd + reservedUsd;
     },
+    async reserve(usd) {
+      reservedUsd += usd;
+    },
+    async commit(usd) {
+      reservedUsd = Math.max(0, reservedUsd - usd);
+      spentUsd += usd;
+    },
+    async release(usd) {
+      reservedUsd = Math.max(0, reservedUsd - usd);
+    },
+    // Legacy compatibility for callers/tests that still use add().
     async add(usd) {
       spentUsd += usd;
+    },
+  };
+}
+
+function adaptLegacyLedger(ledger) {
+  if (typeof ledger.reserve === 'function' && typeof ledger.commit === 'function' && typeof ledger.release === 'function') {
+    return ledger;
+  }
+  // Best-effort adapter: reserve bumps via add; release cannot reclaim.
+  // Callers should migrate to reserve/commit/release for real concurrency safety.
+  return {
+    total: () => ledger.total(),
+    async reserve(usd) {
+      await ledger.add(usd);
+    },
+    async commit(_usd) {
+      // already counted in reserve()
+    },
+    async release(_usd) {
+      // cannot reclaim on legacy ledger
     },
   };
 }
@@ -34,6 +68,8 @@ export function createSpendGuard({
   },
   ledger = memoryLedger(),
 } = {}) {
+  const store = adaptLegacyLedger(ledger);
+
   async function emit(event) {
     try {
       await onAlert(event);
@@ -56,9 +92,9 @@ export function createSpendGuard({
           capUsd,
           alertUsd,
         });
-        return { ok: false, estimateUsd: 0 };
+        return { ok: false, estimateUsd: 0, reserved: false };
       }
-      const spentUsd = await ledger.total();
+      const spentUsd = await store.total();
       const projectedUsd = spentUsd + (estimateUsd ?? 0);
       if (capUsd != null && projectedUsd > capUsd) {
         await emit({
@@ -71,7 +107,10 @@ export function createSpendGuard({
           alertUsd,
           message: `Projected spend ${projectedUsd} exceeds cap ${capUsd}.`,
         });
-        return { ok: false, estimateUsd: estimateUsd ?? 0 };
+        return { ok: false, estimateUsd: estimateUsd ?? 0, reserved: false };
+      }
+      if (estimateUsd) {
+        await store.reserve(estimateUsd);
       }
       if (alertUsd != null && spentUsd < alertUsd && projectedUsd >= alertUsd) {
         await emit({
@@ -85,11 +124,15 @@ export function createSpendGuard({
           message: `Projected spend ${projectedUsd} crossed alert ${alertUsd}.`,
         });
       }
-      return { ok: true, estimateUsd: estimateUsd ?? 0 };
+      return { ok: true, estimateUsd: estimateUsd ?? 0, reserved: Boolean(estimateUsd) };
     },
     async record(estimateUsd) {
       if (!estimateUsd) return;
-      await ledger.add(estimateUsd);
+      await store.commit(estimateUsd);
+    },
+    async release(estimateUsd) {
+      if (!estimateUsd) return;
+      await store.release(estimateUsd);
     },
   };
 }
