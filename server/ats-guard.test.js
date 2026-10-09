@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +15,14 @@ function resolvedConfig(extraEnv) {
   for (const k of ['APP_VARIANT', 'EAS_BUILD_PROFILE']) if (extraEnv[k] === undefined) delete env[k];
   const out = execFileSync('npx', ['expo', 'config', '--json', '--type', 'public'], { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   return JSON.parse(out);
+}
+
+// Runs `expo config` (no --json, which suppresses the message) and returns status + combined output.
+function expoConfigOutput(extraEnv) {
+  const env = { ...process.env, ...extraEnv };
+  for (const k of ['APP_VARIANT', 'EAS_BUILD_PROFILE']) if (extraEnv[k] === undefined) delete env[k];
+  const r = spawnSync('npx', ['expo', 'config', '--type', 'public'], { cwd: root, env, encoding: 'utf8' });
+  return { status: r.status, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 
 test('app.json does not allow cleartext HTTP (iOS ATS / Android)', () => {
@@ -67,6 +75,9 @@ test('no preview/production eas.json profile sets APP_VARIANT=development (no-op
 });
 
 test('non-dev config refuses a non-https EXPO_PUBLIC_API_BASE_URL', () => {
-  assert.throws(() => resolvedConfig({ APP_VARIANT: 'preview', EXPO_PUBLIC_API_BASE_URL: 'http://api.example.com' }));
+  // Must fail for the CRE-255 reason, not because `npx expo` itself failed.
+  const r = expoConfigOutput({ APP_VARIANT: 'preview', EXPO_PUBLIC_API_BASE_URL: 'http://api.example.com' });
+  assert.notEqual(r.status, 0);
+  assert.match(r.out, /EXPO_PUBLIC_API_BASE_URL must be https:\/\/ for non-development builds \(CRE-255\)/);
   assert.doesNotThrow(() => resolvedConfig({ APP_VARIANT: 'preview', EXPO_PUBLIC_API_BASE_URL: 'https://api.example.com' }));
 });
