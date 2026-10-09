@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
-# @creova/secure-storage v1.0.0
-# Source of truth: creova-gif/kazi-ai/secure-storage v1.0.0; keep in sync.
+# @creova/secure-storage v1.1.0
+# Source of truth: creova-gif/kazi-ai/secure-storage v1.1.0; keep in sync.
 # Usage: sh secure-storage/check-sync.sh [ref]   (default ref: main)
 # Compares this copy's SHA256SUMS with the source of truth in kazi-ai.
+# NOTE: returns HTTP 404 (exit 22) until secure-storage/ is on kazi-ai main.
 set -eu
 REF="${1:-main}"
 DIR="$(cd "$(dirname "$0")" && pwd)"

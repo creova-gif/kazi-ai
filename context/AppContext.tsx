@@ -1,5 +1,7 @@
+import { View, Text, Pressable } from 'react-native';
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { createSecureStorage } from '../secure-storage';
+import { createStatePersistence } from './statePersistence';
 
 export type Language = 'sw' | 'en';
 export type JobSector = 'government' | 'ngo' | 'private' | 'informal' | 'tech' | 'health' | 'education' | 'finance';
@@ -112,6 +114,8 @@ const LEGACY_STORAGE_KEY = 'kazi_ai_state_v2';
 // not plaintext AsyncStorage. The legacy plaintext copy is migrated, verified
 // and deleted on first launch (CRE-48 / mobile audit 2026-10-09).
 const storage = createSecureStorage({ namespace: 'kazi', legacyKeys: { state: LEGACY_STORAGE_KEY } });
+// A failed load blocks all saves, so defaults can never overwrite the real CV.
+const persistence = createStatePersistence(storage, 'state');
 
 interface AppContextValue {
   state: AppState;
@@ -133,7 +137,10 @@ interface AppContextValue {
   addCoachMessage: (msg: CoachMessage) => void;
   clearCoachMessages: () => void;
   toggleFollowCompany: (id: string) => void;
-  clearAll: () => void;
+  /** Wipes all on-device data. Rejects if the wipe was incomplete; callers must tell the user. */
+  clearAll: () => Promise<void>;
+  /** Set when a background save fails; data on device is the last good save. */
+  saveError: boolean;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -141,9 +148,15 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
-    storage.get('state').catch(() => null).then(raw => {
+    let cancelled = false;
+    setLoadError(false);
+    persistence.load().then(raw => {
+      if (cancelled) return;
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
@@ -152,16 +165,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
             cv: { ...defaultCV, ...parsed.cv },
             followedCompanies: parsed.followedCompanies ?? [],
           });
-        } catch {}
+        } catch {
+          // Unparseable stored state: do not start with defaults (a save would
+          // overwrite it). Treat as a load error.
+          setLoadError(true);
+          return;
+        }
       }
       setLoaded(true);
-    });
-  }, []);
+    }, () => { if (!cancelled) setLoadError(true); });
+    return () => { cancelled = true; };
+  }, [loadAttempt]);
 
   useEffect(() => {
-    if (!loaded) return;
-    storage.set('state', JSON.stringify(state)).catch(() => {});
-  }, [state, loaded]);
+    if (!loaded || loadError) return;
+    persistence.save(JSON.stringify(state)).then(() => setSaveError(false), () => setSaveError(true));
+  }, [state, loaded, loadError]);
 
   const update = (updater: (s: AppState) => AppState) => setState(prev => updater(prev));
 
@@ -203,9 +222,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? s.followedCompanies.filter(c => c !== id)
         : [...s.followedCompanies, id]
     })),
-    clearAll: () => { storage.wipe().catch(() => {}); setState(defaultState); },
-  }), [state]);
+    clearAll: async () => {
+      // Serialised with saves inside secure-storage; errors propagate to the UI.
+      await persistence.clear();
+      setState(defaultState);
+    },
+    saveError,
+  }), [state, saveError]);
 
+  if (loadError) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 16 }}>
+          We couldn't open your saved data on this device. Nothing has been changed or deleted.
+          {'\n\n'}Hatukuweza kufungua data yako iliyohifadhiwa. Hakuna kilichobadilishwa au kufutwa.
+        </Text>
+        <Pressable accessibilityRole="button" onPress={() => setLoadAttempt(a => a + 1)} style={{ padding: 12 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600' }}>Try again / Jaribu tena</Text>
+        </Pressable>
+      </View>
+    );
+  }
   if (!loaded) return null;
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

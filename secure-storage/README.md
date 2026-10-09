@@ -1,6 +1,6 @@
-# @creova/secure-storage v1.0.0
+# @creova/secure-storage v1.1.0
 
-**Source of truth: `creova-gif/kazi-ai/secure-storage` v1.0.0; keep in sync.**
+**Source of truth: `creova-gif/kazi-ai/secure-storage` v1.1.0; keep in sync.**
 Identical vendored copies live in:
 - `kazi-ai/secure-storage/` (source of truth)
 - `clinic-ai/mobile/secure-storage/`
@@ -10,6 +10,8 @@ To change it: edit in kazi-ai, bump `VERSION` and every header, regenerate
 then copy the whole folder byte-for-byte into clinic-ai. The test suite fails if
 a copy is edited without updating SHA256SUMS; `check-sync.sh` diffs a copy
 against kazi-ai `main`.
+`check-sync.sh` gets HTTP 404 (and exits non-zero) until the module is on
+kazi-ai `main`; pass a branch name as the ref before that.
 
 ## API
 ```ts
@@ -30,7 +32,19 @@ Only `get / set / remove / wipe`. The data key is never returned.
   AsyncStorage/files, or sent over the network.
 - Migration: legacy AsyncStorage plaintext is copied in, read back and compared,
   and deleted only when it matches. On mismatch the plaintext is kept and retried.
-- Missing/corrupt key or tampered ciphertext: blob is discarded, `get` returns
-  `null`, a new key is created on the next large write. No crash, no partial data.
+- **Fail closed, never lose data (v1.1.0).** Every method rejects with a typed
+  `SecureStorageError` (`code`: STORE_UNAVAILABLE, KEY_MISSING, KEY_CORRUPT,
+  DECRYPT_FAILED, MANIFEST_UNREADABLE, MIGRATION_FAILED, RNG_FAILURE,
+  WIPE_INCOMPLETE, INVALID_ARGUMENT). A SecureStore read error is never treated
+  as "no key"; only a genuinely absent key (null) is created. Undecryptable data
+  and orphaned blobs are kept, never deleted. An unreadable manifest is an
+  error, never an empty list.
+- All operations (including key creation, manifest updates and `wipe`) run on
+  one serial queue: concurrent first writes produce exactly one key, and `wipe`
+  never interleaves with a write.
+- Nonces: exactly 12 bytes from the CSPRNG per encryption (asserted).
 - `wipe()`: deletes all values, blobs, migrated legacy keys, manifest and key.
+  It deletes known names directly even if the manifest is unreadable, keeps
+  going on individual failures, and rejects with WIPE_INCOMPLETE if any step
+  failed. Callers must surface that to the user.
 - No logging anywhere in the module (tested).
