@@ -1,5 +1,9 @@
+import { View } from 'react-native';
+import { StorageErrorScreen, SaveErrorBanner } from '../components/StorageErrorScreen';
+import { errorCode, STATE_UNREADABLE } from './storageRecovery';
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createSecureStorage } from '../secure-storage';
+import { createStatePersistence } from './statePersistence';
 
 export type Language = 'sw' | 'en';
 export type JobSector = 'government' | 'ngo' | 'private' | 'informal' | 'tech' | 'health' | 'education' | 'finance';
@@ -107,7 +111,13 @@ const defaultState: AppState = {
   followedCompanies: [],
 };
 
-const STORAGE_KEY = 'kazi_ai_state_v2';
+const LEGACY_STORAGE_KEY = 'kazi_ai_state_v2';
+// CV and profile are PII: stored via secure-storage (SecureStore + AES-GCM),
+// not plaintext AsyncStorage. The legacy plaintext copy is migrated, verified
+// and deleted on first launch (CRE-48 / mobile audit 2026-10-09).
+const storage = createSecureStorage({ namespace: 'kazi', legacyKeys: { state: LEGACY_STORAGE_KEY } });
+// A failed load blocks all saves, so defaults can never overwrite the real CV.
+const persistence = createStatePersistence(storage, 'state');
 
 interface AppContextValue {
   state: AppState;
@@ -129,7 +139,10 @@ interface AppContextValue {
   addCoachMessage: (msg: CoachMessage) => void;
   clearCoachMessages: () => void;
   toggleFollowCompany: (id: string) => void;
-  clearAll: () => void;
+  /** Wipes all on-device data. Rejects if the wipe was incomplete; callers must tell the user. */
+  clearAll: () => Promise<void>;
+  /** Set when a background save fails; data on device is the last good save. */
+  saveError: boolean;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -137,9 +150,15 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(raw => {
+    let cancelled = false;
+    setLoadError(null);
+    persistence.load().then(raw => {
+      if (cancelled) return;
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
@@ -148,16 +167,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
             cv: { ...defaultCV, ...parsed.cv },
             followedCompanies: parsed.followedCompanies ?? [],
           });
-        } catch {}
+        } catch {
+          // Unparseable stored state: do not start with defaults (a save would
+          // overwrite it). Treat as a load error.
+          setLoadError(STATE_UNREADABLE);
+          return;
+        }
       }
       setLoaded(true);
-    });
-  }, []);
+    }, (e) => { if (!cancelled) setLoadError(errorCode(e)); });
+    return () => { cancelled = true; };
+  }, [loadAttempt]);
 
   useEffect(() => {
-    if (!loaded) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
-  }, [state, loaded]);
+    if (!loaded || loadError) return;
+    persistence.save(JSON.stringify(state)).then(() => setSaveError(false), () => setSaveError(true));
+  }, [state, loaded, loadError]);
 
   const update = (updater: (s: AppState) => AppState) => setState(prev => updater(prev));
 
@@ -199,11 +224,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? s.followedCompanies.filter(c => c !== id)
         : [...s.followedCompanies, id]
     })),
-    clearAll: () => { AsyncStorage.removeItem(STORAGE_KEY); setState(defaultState); },
-  }), [state]);
+    clearAll: async () => {
+      // Serialised with saves inside secure-storage; errors propagate to the UI.
+      await persistence.clear();
+      setState(defaultState);
+    },
+    saveError,
+  }), [state, saveError]);
 
+  if (loadError) {
+    return (
+      <StorageErrorScreen
+        code={loadError}
+        onRetry={() => setLoadAttempt(a => a + 1)}
+        onReset={async () => {
+          // User confirmed permanent deletion. persistence.clear() wipes and
+          // re-enables saves; on failure the screen stays with the new code.
+          try {
+            await persistence.clear();
+          } catch (e) {
+            setLoadError(errorCode(e));
+            throw e;
+          }
+          setState(defaultState);
+          setLoadError(null);
+          setLoaded(true);
+        }}
+      />
+    );
+  }
   if (!loaded) return null;
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {saveError ? (
+        <View style={{ flex: 1 }}>
+          <SaveErrorBanner />
+          {children}
+        </View>
+      ) : children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {

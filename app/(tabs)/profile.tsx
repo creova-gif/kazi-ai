@@ -49,7 +49,17 @@ export default function ProfileScreen() {
       t('This will permanently delete your CV and all data. Are you sure?', 'Hii itafuta CV yako na data yote. Una uhakika?'),
       [
         { text: t('Cancel', 'Ghairi'), style: 'cancel' },
-        { text: t('Delete', 'Futa'), style: 'destructive', onPress: () => { clearAll(); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } },
+        { text: t('Delete', 'Futa'), style: 'destructive', onPress: () => {
+          clearAll().then(
+            () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); },
+            () => {
+              Alert.alert(
+                t('Could not delete all data', 'Imeshindwa kufuta data yote'),
+                t('Some data could not be deleted from this device. Please try again.', 'Baadhi ya data haikuweza kufutwa. Tafadhali jaribu tena.'),
+              );
+            },
+          );
+        } },
       ]
     );
   };
