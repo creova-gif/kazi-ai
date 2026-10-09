@@ -10,7 +10,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "serve": "node server/index.js",
-    "test": "node --test server/generate.test.js"
+    "test": "node --test server/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",
