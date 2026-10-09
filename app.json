@@ -15,20 +15,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.kaziaiapp.app",
-      "infoPlist": {
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
-        }
-      }
+      "bundleIdentifier": "com.kaziaiapp.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#E7633B"
       },
-      "package": "com.kaziaiapp.app",
-      "usesCleartextTraffic": true
+      "package": "com.kaziaiapp.app"
     },
     "web": {
       "bundler": "metro",
