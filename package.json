@@ -10,7 +10,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "serve": "node server/index.js",
-    "test": "node --test server/generate.test.js"
+    "test": "node --test server/generate.test.js secure-storage/secure-storage.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",
@@ -20,6 +20,7 @@
     "@expo/vector-icons": "15.1.1",
     "@mui/icons-material": "7.3.5",
     "@mui/material": "7.3.5",
+    "@noble/ciphers": "^2.4.0",
     "@popperjs/core": "2.11.8",
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",
@@ -60,9 +61,11 @@
     "embla-carousel-react": "8.6.0",
     "expo": "^55.0.23",
     "expo-constants": "^55.0.16",
+    "expo-crypto": "~55.0.19",
     "expo-font": "^55.0.7",
     "expo-haptics": "^57.0.1",
     "expo-router": "^55.0.14",
+    "expo-secure-store": "~55.0.18",
     "expo-splash-screen": "^55.0.20",
     "expo-status-bar": "^55.0.6",
     "expo-system-ui": "^55.0.17",

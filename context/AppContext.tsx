@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createSecureStorage } from '../secure-storage';
 
 export type Language = 'sw' | 'en';
 export type JobSector = 'government' | 'ngo' | 'private' | 'informal' | 'tech' | 'health' | 'education' | 'finance';
@@ -107,7 +107,11 @@ const defaultState: AppState = {
   followedCompanies: [],
 };
 
-const STORAGE_KEY = 'kazi_ai_state_v2';
+const LEGACY_STORAGE_KEY = 'kazi_ai_state_v2';
+// CV and profile are PII: stored via secure-storage (SecureStore + AES-GCM),
+// not plaintext AsyncStorage. The legacy plaintext copy is migrated, verified
+// and deleted on first launch (CRE-48 / mobile audit 2026-10-09).
+const storage = createSecureStorage({ namespace: 'kazi', legacyKeys: { state: LEGACY_STORAGE_KEY } });
 
 interface AppContextValue {
   state: AppState;
@@ -139,7 +143,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(raw => {
+    storage.get('state').catch(() => null).then(raw => {
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
@@ -156,7 +160,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loaded) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
+    storage.set('state', JSON.stringify(state)).catch(() => {});
   }, [state, loaded]);
 
   const update = (updater: (s: AppState) => AppState) => setState(prev => updater(prev));
@@ -199,7 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? s.followedCompanies.filter(c => c !== id)
         : [...s.followedCompanies, id]
     })),
-    clearAll: () => { AsyncStorage.removeItem(STORAGE_KEY); setState(defaultState); },
+    clearAll: () => { storage.wipe().catch(() => {}); setState(defaultState); },
   }), [state]);
 
   if (!loaded) return null;
