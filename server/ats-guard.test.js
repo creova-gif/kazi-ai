@@ -2,11 +2,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const FORBIDDEN = ['NSAllowsArbitraryLoads', 'usesCleartextTraffic', 'NSAllowsArbitraryLoadsInWebContent', 'NSAllowsArbitraryLoadsForMedia'];
+
+// Resolve the real Expo config (app.json + app.config.ts) the way EAS does.
+function resolvedConfig(extraEnv) {
+  const env = { ...process.env, ...extraEnv };
+  for (const k of ['APP_VARIANT', 'EAS_BUILD_PROFILE']) if (extraEnv[k] === undefined) delete env[k];
+  const out = execFileSync('npx', ['expo', 'config', '--json', '--type', 'public'], { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  return JSON.parse(out);
+}
 
 test('app.json does not allow cleartext HTTP (iOS ATS / Android)', () => {
   const app = JSON.parse(readFileSync(join(root, 'app.json'), 'utf8')).expo;
@@ -24,11 +33,40 @@ test('no Expo config file re-introduces the forbidden flags', () => {
   }
 });
 
-test('dev-only ATS relaxation is gated on the development variant and is local-only', () => {
-  const p = join(root, 'app.config.ts');
+test('app.config.ts exists (guard must not silently skip)', () => {
+  assert.ok(existsSync(join(root, 'app.config.ts')), 'app.config.ts is missing');
+});
+
+for (const [label, env] of [['env unset', {}], ["APP_VARIANT='preview'", { APP_VARIANT: 'preview' }], ["EAS_BUILD_PROFILE='production'", { EAS_BUILD_PROFILE: 'production' }]]) {
+  test(`resolved config (${label}) has no ATS exception and no cleartext`, () => {
+    const cfg = resolvedConfig(env);
+    assert.equal(cfg.ios?.infoPlist?.NSAppTransportSecurity, undefined);
+    assert.equal(cfg.android?.usesCleartextTraffic, undefined);
+    const text = JSON.stringify(cfg);
+    for (const flag of FORBIDDEN) assert.ok(!text.includes(flag), `${label}: ${flag}`);
+  });
+}
+
+test("resolved config (APP_VARIANT='development') relaxes local networking only", () => {
+  const ats = resolvedConfig({ APP_VARIANT: 'development' }).ios?.infoPlist?.NSAppTransportSecurity;
+  assert.deepEqual(ats, { NSAllowsLocalNetworking: true });
+});
+
+test('no preview/production eas.json profile sets APP_VARIANT=development (no-op until eas.json exists)', () => {
+  const p = join(root, 'eas.json');
   if (!existsSync(p)) return;
-  const src = readFileSync(p, 'utf8');
-  assert.match(src, /APP_VARIANT === 'development'/);
-  assert.match(src, /if \(!isDev\) return base;/);
-  assert.match(src, /NSAllowsLocalNetworking: true/);
+  const build = JSON.parse(readFileSync(p, 'utf8')).build ?? {};
+  for (const [name, prof] of Object.entries(build)) {
+    if (name === 'development') continue;
+    // follow "extends" chains
+    let env = {}; let cur = prof; const seen = new Set();
+    while (cur) { env = { ...(cur.env ?? {}), ...env }; if (!cur.extends || seen.has(cur.extends)) break; seen.add(cur.extends); cur = build[cur.extends]; }
+    assert.notEqual(env.APP_VARIANT, 'development', `eas.json profile "${name}" sets APP_VARIANT=development`);
+    if (env.EXPO_PUBLIC_API_BASE_URL) assert.match(env.EXPO_PUBLIC_API_BASE_URL, /^https:\/\//, `profile "${name}" API base URL must be https`);
+  }
+});
+
+test('non-dev config refuses a non-https EXPO_PUBLIC_API_BASE_URL', () => {
+  assert.throws(() => resolvedConfig({ APP_VARIANT: 'preview', EXPO_PUBLIC_API_BASE_URL: 'http://api.example.com' }));
+  assert.doesNotThrow(() => resolvedConfig({ APP_VARIANT: 'preview', EXPO_PUBLIC_API_BASE_URL: 'https://api.example.com' }));
 });

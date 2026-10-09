@@ -12,7 +12,14 @@ const isDev =
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const base = config as ExpoConfig;
-  if (!isDev) return base;
+  if (!isDev) {
+    // Non-dev builds must talk to the API over TLS.
+    const api = process.env.EXPO_PUBLIC_API_BASE_URL;
+    if (api && !api.startsWith('https://')) {
+      throw new Error('EXPO_PUBLIC_API_BASE_URL must be https:// for non-development builds (CRE-255)');
+    }
+    return base;
+  }
   return {
     ...base,
     ios: {
