@@ -1,5 +1,5 @@
-// @creova/secure-storage v1.1.0
-// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.0; keep in sync.
+// @creova/secure-storage v1.1.1
+// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.1; keep in sync.
 // Run: node --test secure-storage/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -190,6 +190,35 @@ test('concurrent first writes create exactly one key and all values decrypt', as
   for (const n of names) assert.equal(await s.get(n), bigCV + n);
   const manifest = JSON.parse(m.ss.get('t.manifest'));
   assert.deepEqual([...manifest].sort(), [...names].sort());
+});
+
+test('the next operation succeeds after an error (queue is not poisoned)', async () => {
+  const m = mocks();
+  const s = createSecureStorage(m.deps, { namespace: 't' });
+  await s.set('profile', small);
+  const realGet = m.deps.SecureStore.getItemAsync;
+  let fail = true;
+  m.deps.SecureStore.getItemAsync = async (k, o) => { if (fail) { fail = false; throw new Error('once'); } return realGet(k, o); };
+  await assert.rejects(s.get('profile'), { code: 'STORE_UNAVAILABLE' });
+  assert.equal(await s.get('profile'), small);
+  await assert.rejects(s.set('bad name!', 'x'), { code: 'INVALID_ARGUMENT' });
+  await s.set('cv', bigCV);
+  assert.equal(await s.get('cv'), bigCV);
+});
+
+test('after KEY_MISSING, a fresh set creates a new key; older values stay unreadable (documented)', async () => {
+  const m = mocks();
+  const s = createSecureStorage(m.deps, { namespace: 't' });
+  await s.set('cv', bigCV);
+  await s.set('cv2', bigCV + '2');
+  m.ss.delete('t.dek');
+  await assert.rejects(s.get('cv'), { code: 'KEY_MISSING' });
+  await s.set('cv2', bigCV + '3');
+  assert.equal(await s.get('cv2'), bigCV + '3');
+  await assert.rejects(s.get('cv'), { code: 'DECRYPT_FAILED' });
+  assert.ok(m.as.has('@t/blob/cv'));
+  await s.wipe();
+  assert.equal(await s.get('cv'), null);
 });
 
 test('nonces: exactly 12 bytes requested, unique across 10k encryptions', async () => {

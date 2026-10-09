@@ -1,5 +1,5 @@
-// @creova/secure-storage v1.1.0
-// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.0; keep in sync.
+// @creova/secure-storage v1.1.1
+// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.1; keep in sync.
 // Vendored IDENTICALLY into: kazi-ai/secure-storage, clinic-ai/mobile/secure-storage.
 // Do not edit one copy only: bump VERSION, update SHA256SUMS, copy to both repos.
 //
@@ -23,7 +23,7 @@
 import { gcm } from '@noble/ciphers/aes.js';
 import { utf8ToBytes, bytesToUtf8 } from '@noble/ciphers/utils.js';
 
-export const VERSION = '1.1.0';
+export const VERSION = '1.1.1';
 export const SMALL_LIMIT = 1800; // bytes; below iOS/Android SecureStore practical limits
 const KEY_LEN = 32;
 const NONCE_LEN = 12;
@@ -241,10 +241,11 @@ export function createSecureStorage(deps, opts) {
     migrated = true; // nothing left to migrate
   }
 
+  // async wrappers: invalid arguments reject (never throw synchronously).
   return {
-    get(name) { checkName(name); return serial(async () => { await ensureMigrated(); return rawGet(name); }); },
-    set(name, value) { checkName(name); return serial(async () => { await ensureMigrated(); return rawSet(name, value); }); },
-    remove(name) { checkName(name); return serial(async () => { await ensureMigrated(); return rawRemove(name); }); },
-    wipe() { return serial(rawWipe); },
+    async get(name) { checkName(name); return serial(async () => { await ensureMigrated(); return rawGet(name); }); },
+    async set(name, value) { checkName(name); return serial(async () => { await ensureMigrated(); return rawSet(name, value); }); },
+    async remove(name) { checkName(name); return serial(async () => { await ensureMigrated(); return rawRemove(name); }); },
+    async wipe() { return serial(rawWipe); },
   };
 }

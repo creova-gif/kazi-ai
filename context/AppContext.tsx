@@ -1,4 +1,6 @@
-import { View, Text, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { StorageErrorScreen, SaveErrorBanner } from '../components/StorageErrorScreen';
+import { errorCode, STATE_UNREADABLE } from './storageRecovery';
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { createSecureStorage } from '../secure-storage';
 import { createStatePersistence } from './statePersistence';
@@ -148,13 +150,13 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    setLoadError(false);
+    setLoadError(null);
     persistence.load().then(raw => {
       if (cancelled) return;
       if (raw) {
@@ -168,12 +170,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } catch {
           // Unparseable stored state: do not start with defaults (a save would
           // overwrite it). Treat as a load error.
-          setLoadError(true);
+          setLoadError(STATE_UNREADABLE);
           return;
         }
       }
       setLoaded(true);
-    }, () => { if (!cancelled) setLoadError(true); });
+    }, (e) => { if (!cancelled) setLoadError(errorCode(e)); });
     return () => { cancelled = true; };
   }, [loadAttempt]);
 
@@ -232,19 +234,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (loadError) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 16 }}>
-          We couldn't open your saved data on this device. Nothing has been changed or deleted.
-          {'\n\n'}Hatukuweza kufungua data yako iliyohifadhiwa. Hakuna kilichobadilishwa au kufutwa.
-        </Text>
-        <Pressable accessibilityRole="button" onPress={() => setLoadAttempt(a => a + 1)} style={{ padding: 12 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>Try again / Jaribu tena</Text>
-        </Pressable>
-      </View>
+      <StorageErrorScreen
+        code={loadError}
+        onRetry={() => setLoadAttempt(a => a + 1)}
+        onReset={async () => {
+          // User confirmed permanent deletion. persistence.clear() wipes and
+          // re-enables saves; on failure the screen stays with the new code.
+          try {
+            await persistence.clear();
+          } catch (e) {
+            setLoadError(errorCode(e));
+            throw e;
+          }
+          setState(defaultState);
+          setLoadError(null);
+          setLoaded(true);
+        }}
+      />
     );
   }
   if (!loaded) return null;
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {saveError ? (
+        <View style={{ flex: 1 }}>
+          <SaveErrorBanner />
+          {children}
+        </View>
+      ) : children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {

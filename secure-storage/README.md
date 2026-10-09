@@ -1,6 +1,6 @@
-# @creova/secure-storage v1.1.0
+# @creova/secure-storage v1.1.1
 
-**Source of truth: `creova-gif/kazi-ai/secure-storage` v1.1.0; keep in sync.**
+**Source of truth: `creova-gif/kazi-ai/secure-storage` v1.1.1; keep in sync.**
 Identical vendored copies live in:
 - `kazi-ai/secure-storage/` (source of truth)
 - `clinic-ai/mobile/secure-storage/`
@@ -32,7 +32,7 @@ Only `get / set / remove / wipe`. The data key is never returned.
   AsyncStorage/files, or sent over the network.
 - Migration: legacy AsyncStorage plaintext is copied in, read back and compared,
   and deleted only when it matches. On mismatch the plaintext is kept and retried.
-- **Fail closed, never lose data (v1.1.0).** Every method rejects with a typed
+- **Fail closed, never lose data (v1.1.1).** Every method rejects with a typed
   `SecureStorageError` (`code`: STORE_UNAVAILABLE, KEY_MISSING, KEY_CORRUPT,
   DECRYPT_FAILED, MANIFEST_UNREADABLE, MIGRATION_FAILED, RNG_FAILURE,
   WIPE_INCOMPLETE, INVALID_ARGUMENT). A SecureStore read error is never treated
@@ -48,3 +48,18 @@ Only `get / set / remove / wipe`. The data key is never returned.
   going on individual failures, and rejects with WIPE_INCOMPLETE if any step
   failed. Callers must surface that to the user.
 - No logging anywhere in the module (tested).
+
+## Known behaviours (read before integrating)
+- **After `KEY_MISSING`:** a later `set()` of a large value creates a **new**
+  key (the old one is gone). Values encrypted under the old key stay in
+  AsyncStorage but are permanently unreadable (`DECRYPT_FAILED`); they are
+  never auto-deleted. Apps should offer a user-confirmed "reset data on this
+  device" (`wipe()`) for KEY_MISSING / KEY_CORRUPT / DECRYPT_FAILED /
+  MIGRATION_FAILED; only STORE_UNAVAILABLE is worth a plain retry.
+- **Errors don't poison the queue:** the operation after a failed one runs
+  normally (tested).
+- **A SecureStore call that never settles stalls the queue.** Every operation
+  is serialised, so if a SecureStore promise never resolves (e.g. a biometric
+  prompt left open when `requireAuthentication: true` is opted into), all later
+  get/set/remove/wipe calls wait behind it. There is no timeout in v1.1.1;
+  keep `requireAuthentication` off unless the UI guarantees the prompt resolves.

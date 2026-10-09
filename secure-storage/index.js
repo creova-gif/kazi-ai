@@ -1,5 +1,5 @@
-// @creova/secure-storage v1.1.0
-// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.0; keep in sync.
+// @creova/secure-storage v1.1.1
+// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.1; keep in sync.
 // Binds the core to the real Expo modules. No app imports.
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';

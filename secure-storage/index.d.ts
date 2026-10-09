@@ -1,5 +1,5 @@
-// @creova/secure-storage v1.1.0
-// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.0; keep in sync.
+// @creova/secure-storage v1.1.1
+// Source of truth: creova-gif/kazi-ai/secure-storage v1.1.1; keep in sync.
 export declare const VERSION: string;
 export type SecureStorageErrorCode =
   | 'STORE_UNAVAILABLE' | 'KEY_MISSING' | 'KEY_CORRUPT' | 'DECRYPT_FAILED'
